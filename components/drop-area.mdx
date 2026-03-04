@@ -1,0 +1,343 @@
+---
+title: DropArea
+description: Drag-and-drop zone for file uploads with visual feedback and customization options
+---
+
+The `DropArea` component provides a drag-and-drop interface for file uploads. It displays visual feedback when files are dragged over it and can be configured as clickable to open the system file picker.
+
+## Overview
+
+DropArea extends `LitUploaderBlock` and creates an interactive drop zone for files. It supports dragging files from the desktop, dropping URLs, and can optionally act as a button to open the file selection dialog.
+
+## Basic Usage
+
+```html
+<uc-drop-area ctx-name="my-uploader"></uc-drop-area>
+```
+
+## With Custom Text
+
+```html
+<uc-drop-area 
+  ctx-name="my-uploader"
+  text="Drop your images here"
+  with-icon
+></uc-drop-area>
+```
+
+## Clickable Drop Area
+
+```html
+<uc-drop-area 
+  ctx-name="my-uploader"
+  clickable
+  text="Click or drop files here"
+  with-icon
+></uc-drop-area>
+```
+
+## Properties
+
+<ParamField path="clickable" type="boolean" default="false">
+  Makes the drop area clickable to open the file picker.
+  
+  ```html
+  <uc-drop-area clickable></uc-drop-area>
+  ```
+  
+  When enabled, users can click or press Space/Enter to open the system file dialog.
+</ParamField>
+
+<ParamField path="disabled" type="boolean" default="false">
+  Disables the drop area, preventing any interactions.
+  
+  ```html
+  <uc-drop-area disabled></uc-drop-area>
+  ```
+</ParamField>
+
+<ParamField path="with-icon" type="boolean" default="false">
+  Shows an upload icon in the drop area.
+  
+  ```html
+  <uc-drop-area with-icon></uc-drop-area>
+  ```
+  
+  Displays a cloud upload icon with an arrow animation on drag hover.
+</ParamField>
+
+<ParamField path="text" type="string" default="undefined">
+  Custom text to display in the drop area.
+  
+  ```html
+  <uc-drop-area text="Drop your files here"></uc-drop-area>
+  ```
+  
+  If not provided, uses the localized default text "drop-files-here".
+</ParamField>
+
+<ParamField path="fullscreen" type="boolean" default="false">
+  Makes the drop area cover the entire viewport.
+  
+  ```html
+  <uc-drop-area fullscreen></uc-drop-area>
+  ```
+  
+  Useful for creating an overlay drop zone. Automatically hidden when other visible drop areas are present.
+</ParamField>
+
+<ParamField path="single" type="boolean" default="false">
+  CSS-only attribute for styling single-file upload drop areas.
+  
+  ```html
+  <uc-drop-area single></uc-drop-area>
+  ```
+</ParamField>
+
+<ParamField path="ghost" type="boolean" default="false">
+  CSS-only attribute for styling ghost/overlay drop areas.
+  
+  ```html
+  <uc-drop-area ghost></uc-drop-area>
+  ```
+  
+  Used internally for overlay drop zones in the upload list.
+</ParamField>
+
+<ParamField path="initflow" type="boolean" default="false">
+  Clicking/activating opens the initial flow screen instead of file picker.
+  
+  ```html
+  <uc-drop-area clickable initflow></uc-drop-area>
+  ```
+  
+  Useful when you want to show the source selection screen.
+</ParamField>
+
+## Drag States
+
+The component provides visual feedback through the `drag-state` attribute:
+
+- `inactive` - No drag operation
+- `near` - Files are being dragged near the drop area
+- `over` - Files are directly over the drop area
+
+You can style these states with CSS:
+
+```css
+uc-drop-area[drag-state="near"] {
+  border-color: blue;
+}
+
+uc-drop-area[drag-state="over"] {
+  border-color: green;
+  background: rgba(0, 255, 0, 0.1);
+}
+```
+
+## Methods
+
+<ParamField path="isActive()" type="() => boolean">
+  Returns whether the drop area is active and can receive drops.
+  
+  ```javascript
+  const dropArea = document.querySelector('uc-drop-area');
+  if (dropArea.isActive()) {
+    console.log('Drop area is ready');
+  }
+  ```
+  
+  Checks if the drop area is:
+  - Enabled (not disabled)
+  - Visible (not hidden)
+  - Has non-zero dimensions
+  - Is within the viewport
+</ParamField>
+
+## Custom Content
+
+You can provide custom content using the default slot:
+
+```html
+<uc-drop-area ctx-name="my-uploader" clickable>
+  <div style="padding: 40px; text-align: center;">
+    <h3>Upload Your Files</h3>
+    <p>Drag and drop or click to select</p>
+    <img src="upload-icon.svg" alt="Upload" />
+  </div>
+</uc-drop-area>
+```
+
+If custom content is provided, it replaces the default drop area UI.
+
+## Behavior
+
+### File Type Filtering
+
+DropArea respects the `accept` configuration from the Config component:
+
+```html
+<uc-config ctx-name="my-uploader" accept="image/*"></uc-config>
+<uc-drop-area ctx-name="my-uploader"></uc-drop-area>
+```
+
+### Multiple File Restrictions
+
+Respects `multiple`, `multipleMax`, and `multipleMin` settings:
+
+```html
+<uc-config ctx-name="my-uploader" multiple multiple-max="5"></uc-config>
+<uc-drop-area ctx-name="my-uploader"></uc-drop-area>
+```
+
+The drop area automatically disables when the maximum number of files is reached.
+
+### Source List Integration
+
+The drop area is only active when `local` is in the source list:
+
+```html
+<uc-config ctx-name="my-uploader" source-list="local, url"></uc-config>
+<uc-drop-area ctx-name="my-uploader"></uc-drop-area>
+```
+
+If you remove `local` from the source list, the drop area becomes disabled.
+
+## Supported Drop Types
+
+DropArea supports dropping:
+
+1. **Files from desktop** - Standard file drag and drop
+2. **Folders** - Recursively processes all files in folders
+3. **URLs** - Extracts and uploads files from dropped URLs
+
+```javascript
+// Files are automatically added to the upload collection
+// from UploadSource.DROP_AREA
+```
+
+## Examples
+
+### Minimal Drop Area
+
+```html
+<uc-drop-area ctx-name="my-uploader"></uc-drop-area>
+```
+
+### Full-Featured Drop Area
+
+```html
+<uc-drop-area 
+  ctx-name="my-uploader"
+  clickable
+  with-icon
+  text="Click or drag files here"
+></uc-drop-area>
+```
+
+### Fullscreen Overlay
+
+```html
+<uc-drop-area 
+  ctx-name="my-uploader"
+  fullscreen
+  with-icon
+  text="Drop files anywhere"
+></uc-drop-area>
+```
+
+This creates an overlay that appears when files are dragged over the page.
+
+### Single File Upload
+
+```html
+<uc-config ctx-name="my-uploader" multiple="false"></uc-config>
+<uc-drop-area 
+  ctx-name="my-uploader"
+  single
+  clickable
+  text="Drop a single file"
+></uc-drop-area>
+```
+
+### Image-Only Drop Zone
+
+```html
+<uc-config ctx-name="my-uploader" img-only></uc-config>
+<uc-drop-area 
+  ctx-name="my-uploader"
+  clickable
+  with-icon
+  text="Drop images here"
+></uc-drop-area>
+```
+
+### Programmatic Control
+
+```javascript
+const dropArea = document.querySelector('uc-drop-area');
+
+// Disable programmatically
+dropArea.disabled = true;
+
+// Update text
+dropArea.text = 'New drop zone text';
+
+// Check if active
+if (dropArea.isActive()) {
+  console.log('Ready to receive files');
+}
+```
+
+## Accessibility
+
+### Keyboard Support
+
+When `clickable` is enabled:
+- `Space` - Activates the drop area
+- `Enter` - Activates the drop area
+
+### Screen Readers
+
+The component is focusable and announces its purpose when `clickable` is enabled. Consider adding ARIA labels for better accessibility:
+
+```html
+<uc-drop-area 
+  clickable
+  aria-label="Upload files by clicking or dragging"
+></uc-drop-area>
+```
+
+## Styling
+
+The component can be styled using CSS custom properties and selectors:
+
+```css
+uc-drop-area {
+  border: 2px dashed #ccc;
+  border-radius: 8px;
+  padding: 40px;
+}
+
+uc-drop-area[drag-state="over"] {
+  border-color: #0078ff;
+  background: rgba(0, 120, 255, 0.05);
+}
+
+uc-drop-area[disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+```
+
+## Source Code Reference
+
+Implementation: `/workspace/source/src/blocks/DropArea/DropArea.ts:16`
+
+Dropzone functionality: `/workspace/source/src/blocks/DropArea/addDropzone.ts`
+
+## See Also
+
+- [Config](/components/config) - Configure upload behavior
+- [SourceList](/components/source-list) - Upload source selection
+- [UploadList](/components/upload-list) - Display uploaded files

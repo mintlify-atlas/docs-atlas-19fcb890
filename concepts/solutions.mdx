@@ -1,0 +1,583 @@
+---
+title: Pre-built Solutions
+description: Understanding the complete uploader solutions and when to use each one
+---
+
+The File Uploader provides pre-built solutions that combine components into complete, ready-to-use upload experiences. Each solution is optimized for specific use cases and UI patterns.
+
+## Available Solutions
+
+The File Uploader includes four pre-built solutions:
+
+<CardGroup cols={2}>
+  <Card title="File Uploader Regular" icon="upload">
+    Full-featured modal uploader with button trigger
+  </Card>
+  
+  <Card title="File Uploader Inline" icon="window">
+    Embedded uploader for inline forms
+  </Card>
+  
+  <Card title="File Uploader Minimal" icon="minimize">
+    Compact uploader with inline preview
+  </Card>
+  
+  <Card title="Cloud Image Editor" icon="wand-magic-sparkles">
+    Standalone image editing solution
+  </Card>
+</CardGroup>
+
+## File Uploader Regular
+
+The Regular solution provides a complete modal-based upload experience, triggered by a button click.
+
+From `src/solutions/file-uploader/regular/FileUploaderRegular.ts:22-46`:
+
+```typescript
+export class FileUploaderRegular extends LitSolutionBlock {
+  public declare attributesMeta: {
+    headless?: boolean;
+    'ctx-name': string;
+  };
+  public static override styleAttrs = [
+    ...super.styleAttrs, 
+    'uc-file-uploader-regular'
+  ];
+
+  @property({ type: Boolean })
+  public headless = false;
+
+  public constructor() {
+    super();
+    this.init$ = {
+      ...this.init$,
+    } as FileUploaderRegularInitState;
+  }
+}
+```
+
+### When to Use
+
+<Note>
+  Use File Uploader Regular when you want a traditional upload experience with a button that opens a modal dialog. Perfect for forms where file upload is not the primary action.
+</Note>
+
+### Usage
+
+```html
+<uc-file-uploader-regular
+  ctx-name="my-uploader"
+  pubkey="your_public_key"
+  multiple="true"
+  source-list="local, url, camera"
+>
+</uc-file-uploader-regular>
+```
+
+### Template Structure
+
+From `src/solutions/file-uploader/regular/FileUploaderRegular.ts:48-82`:
+
+```typescript
+public override render() {
+  return html`
+    ${super.render()}
+    <uc-simple-btn ?hidden=${this.headless}></uc-simple-btn>
+
+    <uc-modal id="start-from" strokes block-body-scrolling>
+      <uc-start-from>
+        <uc-drop-area with-icon clickable></uc-drop-area>
+        <uc-source-list role="list" wrap></uc-source-list>
+        <button type="button" class="uc-secondary-btn" 
+          @click=${this.$['*historyBack']}>
+          ${this.l10n('start-from-cancel')}
+        </button>
+        <uc-copyright></uc-copyright>
+      </uc-start-from>
+    </uc-modal>
+
+    <uc-modal id="upload-list" strokes block-body-scrolling>
+      <uc-upload-list></uc-upload-list>
+    </uc-modal>
+
+    <uc-modal id="camera" strokes block-body-scrolling>
+      <uc-camera-source></uc-camera-source>
+    </uc-modal>
+
+    <uc-modal id="url" strokes block-body-scrolling>
+      <uc-url-source></uc-url-source>
+    </uc-modal>
+
+    <uc-modal id="external" strokes block-body-scrolling>
+      <uc-external-source></uc-external-source>
+    </uc-modal>
+
+    <uc-modal id="cloud-image-edit" strokes block-body-scrolling>
+      <uc-cloud-image-editor-activity></uc-cloud-image-editor-activity>
+    </uc-modal>
+  `;
+}
+```
+
+### Features
+
+- Button trigger (can be hidden with `headless` attribute)
+- Modal dialogs for all upload activities
+- All upload sources (local, URL, camera, external)
+- Integrated cloud image editor
+- Upload list with progress tracking
+
+### Headless Mode
+
+Hide the default button and control the uploader programmatically:
+
+```html
+<uc-file-uploader-regular headless>
+</uc-file-uploader-regular>
+
+<script>
+  const uploader = document.querySelector('uc-file-uploader-regular');
+  const api = uploader.getAPI();
+  
+  // Open programmatically
+  document.querySelector('#my-button').addEventListener('click', () => {
+    api.initFlow();
+  });
+</script>
+```
+
+## File Uploader Inline
+
+The Inline solution embeds the uploader directly in the page without modals.
+
+From `src/solutions/file-uploader/inline/FileUploaderInline.ts:23-38`:
+
+```typescript
+export class FileUploaderInline extends LitSolutionBlock {
+  public declare attributesMeta: {
+    'ctx-name': string;
+  };
+  public static override styleAttrs = [
+    ...super.styleAttrs, 
+    'uc-file-uploader-inline'
+  ];
+
+  @state()
+  private _couldCancel = false;
+
+  public constructor() {
+    super();
+    this.init$ = {
+      ...this.init$,
+    } as FileUploaderInlineInitState;
+  }
+}
+```
+
+### When to Use
+
+<Note>
+  Use File Uploader Inline when file upload is a primary action on the page, or when you want to embed the uploader within a form or content area.
+</Note>
+
+### Usage
+
+```html
+<uc-file-uploader-inline
+  ctx-name="inline-uploader"
+  pubkey="your_public_key"
+  multiple="true"
+>
+</uc-file-uploader-inline>
+```
+
+### Template Structure
+
+From `src/solutions/file-uploader/inline/FileUploaderInline.ts:95-117`:
+
+```typescript
+public override render() {
+  return html`
+    ${super.render()}
+    <uc-start-from>
+      <uc-drop-area with-icon clickable></uc-drop-area>
+      <uc-source-list role="list" wrap></uc-source-list>
+      <button
+        type="button"
+        class="uc-cancel-btn uc-secondary-btn"
+        @click=${this._handleCancel}
+        ?hidden=${!this._couldCancel}
+      >
+      ${this.l10n('start-from-cancel')}
+      </button>
+      <uc-copyright></uc-copyright>
+    </uc-start-from>
+    <uc-upload-list></uc-upload-list>
+    <uc-camera-source></uc-camera-source>
+    <uc-url-source></uc-url-source>
+    <uc-external-source></uc-external-source>
+    <uc-cloud-image-editor-activity></uc-cloud-image-editor-activity>
+  `;
+}
+```
+
+### Features
+
+- No modals - all UI inline
+- Automatic activity switching
+- Integrated cancel functionality
+- Full source support
+- Embedded image editing
+
+### Activity Flow
+
+The inline solution manages activity transitions automatically:
+
+From `src/solutions/file-uploader/inline/FileUploaderInline.ts:69-88`:
+
+```typescript
+public override initCallback(): void {
+  super.initCallback();
+
+  const initActivity = this._getInitActivity();
+
+  this.sub('*currentActivity', (val: string | null) => {
+    if (!val) {
+      this.$['*currentActivity'] = initActivity;
+    }
+  });
+
+  this.sub('*uploadList', (list: unknown) => {
+    if (Array.isArray(list) && list.length > 0 && 
+        this.$['*currentActivity'] === initActivity) {
+      this.$['*currentActivity'] = LitActivityBlock.activities.UPLOAD_LIST;
+    }
+  });
+}
+```
+
+## File Uploader Minimal
+
+The Minimal solution provides a compact uploader with inline file preview.
+
+From `src/solutions/file-uploader/minimal/FileUploaderMinimal.ts:27-55`:
+
+```typescript
+export class FileUploaderMinimal extends LitSolutionBlock {
+  public declare attributesMeta: {
+    'ctx-name': string;
+  };
+  public static override styleAttrs = [
+    ...super.styleAttrs, 
+    'uc-file-uploader-minimal'
+  ];
+
+  @state()
+  private _singleUpload = false;
+
+  @state()
+  private _isHiddenStartFrom = false;
+
+  @state()
+  private _classUploadList = EMPTY_CLASS;
+
+  @state()
+  private _classStartFrom = EMPTY_CLASS;
+
+  public constructor() {
+    super();
+    this.init$ = {
+      ...this.init$,
+    } as FileUploaderMinimalInitState;
+  }
+}
+```
+
+### When to Use
+
+<Note>
+  Use File Uploader Minimal for compact UI requirements, profile picture uploads, or when you need to show a small drop zone with inline preview.
+</Note>
+
+### Usage
+
+```html
+<uc-file-uploader-minimal
+  ctx-name="minimal-uploader"
+  pubkey="your_public_key"
+  multiple="false"
+  img-only="true"
+>
+</uc-file-uploader-minimal>
+```
+
+### Template Structure
+
+From `src/solutions/file-uploader/minimal/FileUploaderMinimal.ts:149-191`:
+
+```typescript
+public override render() {
+  return html`
+    ${super.render()}
+    <uc-start-from ?hidden=${this._isHiddenStartFrom} 
+      class=${this._classStartFrom}>
+      <uc-drop-area
+        ?single=${this._singleUpload}
+        initflow
+        clickable
+        tabindex="0"
+      ><span>${this.l10n('choose-file')}</span></uc-drop-area>
+      <uc-copyright></uc-copyright>
+    </uc-start-from>
+    <uc-upload-list class=${this._classUploadList}></uc-upload-list>
+
+    <uc-modal id="start-from" strokes block-body-scrolling>
+      <uc-start-from>
+        <uc-drop-area with-icon clickable></uc-drop-area>
+        <uc-source-list role="list" wrap></uc-source-list>
+        <button type="button" class="uc-secondary-btn"
+          @click=${this.$['*historyBack']}>
+          ${this.l10n('start-from-cancel')}
+        </button>
+      </uc-start-from>
+    </uc-modal>
+
+    <!-- Additional modals -->
+  `;
+}
+```
+
+### Features
+
+- Compact drop zone
+- Inline file preview
+- Modals for additional sources
+- Single/multiple file modes
+- Grid/list view modes
+
+### View Modes
+
+The minimal solution adapts to different view modes:
+
+From `src/solutions/file-uploader/minimal/FileUploaderMinimal.ts:120-137`:
+
+```typescript
+this.subConfigValue('filesViewMode', (mode) => {
+  this.setAttribute('mode', mode);
+
+  this.subConfigValue('multiple', (multiple) => {
+    if (mode === 'grid') {
+      if (multiple) {
+        this.style.removeProperty('--uc-grid-col');
+      } else {
+        this.style.setProperty('--uc-grid-col', '1');
+      }
+      this._singleUpload = !multiple;
+    } else {
+      this.style.removeProperty('--uc-grid-col');
+      this._singleUpload = false;
+    }
+  });
+});
+```
+
+## Cloud Image Editor
+
+A standalone image editing solution.
+
+From `src/solutions/cloud-image-editor/index.ts`:
+
+```typescript
+export * from '../../blocks/CloudImageEditor/index';
+export * from './CloudImageEditor';
+
+export { defineComponents } from '../../abstract/defineComponents';
+export { Config } from '../../blocks/Config/Config';
+export { Icon } from '../../blocks/Icon/Icon';
+```
+
+### When to Use
+
+<Note>
+  Use the Cloud Image Editor as a standalone solution when you need image editing capabilities without the full upload flow.
+</Note>
+
+### Usage
+
+```html
+<uc-cloud-image-editor
+  ctx-name="image-editor"
+  pubkey="your_public_key"
+  cdn-url="https://ucarecdn.com/uuid/"
+>
+</uc-cloud-image-editor>
+```
+
+### Features
+
+- Crop with aspect ratio presets
+- Image filters and tuning
+- Rotate and flip
+- Quality adjustments
+- Standalone or integrated
+
+## Choosing a Solution
+
+<Tabs>
+  <Tab title="Regular">
+    **Best for:**
+    - Traditional upload forms
+    - Upload is not the primary action
+    - Need to save screen space
+    - Want familiar modal UX
+    
+    **Considerations:**
+    - Requires user to click button
+    - Modal may cover content
+    - Mobile users need extra tap
+  </Tab>
+  
+  <Tab title="Inline">
+    **Best for:**
+    - Upload-focused pages
+    - Multi-step wizards
+    - Drag-and-drop emphasis
+    - Embedded in content
+    
+    **Considerations:**
+    - Takes more vertical space
+    - All UI visible at once
+    - Better for desktop
+  </Tab>
+  
+  <Tab title="Minimal">
+    **Best for:**
+    - Profile pictures
+    - Single file uploads
+    - Compact UI requirements
+    - Grid/gallery uploads
+    
+    **Considerations:**
+    - Limited to inline preview
+    - Best for images
+    - Works well with single files
+  </Tab>
+  
+  <Tab title="Image Editor">
+    **Best for:**
+    - Post-upload editing
+    - Image management tools
+    - Standalone editor needs
+    - Custom workflows
+    
+    **Considerations:**
+    - Images only
+    - Requires existing file URL
+    - More setup needed
+  </Tab>
+</Tabs>
+
+## Common Patterns
+
+### Solution with Custom Configuration
+
+```html
+<uc-file-uploader-regular
+  ctx-name="my-uploader"
+  pubkey="your_public_key"
+  multiple="true"
+  max-local-file-size-bytes="52428800"
+  source-list="local, camera"
+  img-only="true"
+  use-cloud-image-editor="true"
+>
+</uc-file-uploader-regular>
+```
+
+### Programmatic Control
+
+```javascript
+const uploader = document.querySelector('uc-file-uploader-regular');
+const api = uploader.getAPI();
+
+// Add file programmatically
+api.addFileFromUrl('https://example.com/image.jpg');
+
+// Listen to events
+api.on('file-added', (file) => {
+  console.log('File added:', file);
+});
+
+// Upload all files
+api.uploadAll();
+```
+
+### Custom Solution
+
+Build your own by extending `SolutionBlock`:
+
+```javascript
+import { SolutionBlock } from '@uploadcare/file-uploader';
+import { html } from 'lit';
+
+export class MyCustomSolution extends SolutionBlock {
+  render() {
+    return html`
+      ${super.render()}
+      <uc-config ctx-name="custom"></uc-config>
+      
+      <!-- Your custom component composition -->
+      <uc-drop-area></uc-drop-area>
+      <uc-upload-list></uc-upload-list>
+    `;
+  }
+}
+
+MyCustomSolution.reg('my-custom-solution');
+```
+
+## Solution Exports
+
+All solutions are exported from the main package:
+
+From `src/index.ts:52-56`:
+
+```typescript
+// Solutions:
+export { FileUploaderRegular } from './solutions/file-uploader/regular/FileUploaderRegular';
+export { CloudImageEditor } from './solutions/cloud-image-editor/CloudImageEditor';
+export { FileUploaderInline } from './solutions/file-uploader/inline/FileUploaderInline';
+export { FileUploaderMinimal } from './solutions/file-uploader/minimal/FileUploaderMinimal';
+```
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Choose the right solution">
+    Select the solution that best matches your UX requirements. Don't force Regular into an inline scenario or vice versa.
+  </Accordion>
+  
+  <Accordion title="Configure appropriately">
+    Each solution works best with specific configuration. For example, Minimal works well with `multiple="false"` and grid view.
+  </Accordion>
+  
+  <Accordion title="Test on mobile">
+    Solutions behave differently on mobile. Regular's modal works well, while Inline may require scrolling.
+  </Accordion>
+  
+  <Accordion title="Consider customization">
+    If no pre-built solution fits perfectly, build a custom solution by composing components.
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Configuration System" icon="gear" href="/concepts/configuration">
+    Learn about all configuration options
+  </Card>
+  
+  <Card title="Component Architecture" icon="cubes" href="/concepts/components">
+    Understand the component structure
+  </Card>
+</CardGroup>

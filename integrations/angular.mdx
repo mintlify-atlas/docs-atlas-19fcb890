@@ -1,0 +1,504 @@
+---
+title: "Angular Integration"
+description: "Integrate Uploadcare File Uploader in Angular applications"
+---
+
+## Overview
+
+Uploadcare File Uploader integrates seamlessly with Angular applications. This guide covers how to use the Web Components-based uploader in Angular with proper TypeScript support and change detection.
+
+## Installation
+
+Install the File Uploader package:
+
+```bash
+npm install @uploadcare/file-uploader
+```
+
+## Module Configuration
+
+### Enable Custom Elements Schema
+
+First, configure your Angular module to recognize custom elements:
+
+```typescript app.module.ts
+import { NgModule, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
+import { BrowserModule } from '@angular/platform-browser';
+import { AppComponent } from './app.component';
+
+@NgModule({
+  declarations: [AppComponent],
+  imports: [BrowserModule],
+  providers: [],
+  bootstrap: [AppComponent],
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
+})
+export class AppModule {}
+```
+
+For standalone components (Angular 14+):
+
+```typescript app.component.ts
+import { Component, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
+
+@Component({
+  selector: 'app-root',
+  standalone: true,
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
+  templateUrl: './app.component.html',
+  styleUrls: ['./app.component.css'],
+})
+export class AppComponent {}
+```
+
+## Basic Component
+
+Create a component that initializes the File Uploader:
+
+```typescript file-uploader.component.ts
+import { Component, OnInit, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
+import * as UC from '@uploadcare/file-uploader';
+import '@uploadcare/file-uploader/index.css';
+
+@Component({
+  selector: 'app-file-uploader',
+  standalone: true,
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
+  template: `
+    <div>
+      <uc-config
+        ctx-name="my-uploader"
+        [attr.pubkey]="publicKey"
+      ></uc-config>
+      <uc-file-uploader-regular
+        ctx-name="my-uploader"
+      ></uc-file-uploader-regular>
+    </div>
+  `,
+})
+export class FileUploaderComponent implements OnInit {
+  publicKey = 'YOUR_PUBLIC_KEY';
+
+  ngOnInit(): void {
+    UC.defineComponents(UC);
+  }
+}
+```
+
+<Note>
+Replace `YOUR_PUBLIC_KEY` with your actual Uploadcare public key from your [dashboard](https://app.uploadcare.com/projects/-/api-keys/).
+</Note>
+
+## Handling Upload Events
+
+Use `ViewChild` and event listeners to handle uploads:
+
+```typescript file-uploader-with-events.component.ts
+import {
+  Component,
+  OnInit,
+  OnDestroy,
+  ViewChild,
+  ElementRef,
+  CUSTOM_ELEMENTS_SCHEMA,
+} from '@angular/core';
+import * as UC from '@uploadcare/file-uploader';
+import '@uploadcare/file-uploader/index.css';
+
+@Component({
+  selector: 'app-file-uploader-with-events',
+  standalone: true,
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
+  template: `
+    <div>
+      <uc-config
+        ctx-name="my-uploader"
+        [attr.pubkey]="publicKey"
+      ></uc-config>
+      <uc-file-uploader-regular
+        ctx-name="my-uploader"
+      ></uc-file-uploader-regular>
+      <uc-upload-ctx-provider
+        #ctxProvider
+        ctx-name="my-uploader"
+      ></uc-upload-ctx-provider>
+    </div>
+  `,
+})
+export class FileUploaderWithEventsComponent implements OnInit, OnDestroy {
+  @ViewChild('ctxProvider') ctxProviderRef!: ElementRef;
+
+  publicKey = 'YOUR_PUBLIC_KEY';
+
+  ngOnInit(): void {
+    UC.defineComponents(UC);
+  }
+
+  ngAfterViewInit(): void {
+    const ctxProvider = this.ctxProviderRef.nativeElement;
+
+    ctxProvider.addEventListener(
+      'file-upload-success',
+      this.handleUploadSuccess.bind(this)
+    );
+    ctxProvider.addEventListener(
+      'file-added',
+      this.handleFileAdded.bind(this)
+    );
+    ctxProvider.addEventListener(
+      'upload-error',
+      this.handleError.bind(this)
+    );
+  }
+
+  ngOnDestroy(): void {
+    const ctxProvider = this.ctxProviderRef?.nativeElement;
+    if (ctxProvider) {
+      ctxProvider.removeEventListener(
+        'file-upload-success',
+        this.handleUploadSuccess
+      );
+      ctxProvider.removeEventListener('file-added', this.handleFileAdded);
+      ctxProvider.removeEventListener('upload-error', this.handleError);
+    }
+  }
+
+  handleUploadSuccess(event: CustomEvent): void {
+    console.log('File uploaded:', event.detail);
+    const { uuid, cdnUrl, name } = event.detail;
+    // Handle the uploaded file
+  }
+
+  handleFileAdded(event: CustomEvent): void {
+    console.log('File added:', event.detail);
+  }
+
+  handleError(event: CustomEvent): void {
+    console.error('Upload error:', event.detail);
+  }
+}
+```
+
+## Service-Based Approach
+
+Create a service to manage uploader functionality:
+
+```typescript services/file-uploader.service.ts
+import { Injectable } from '@angular/core';
+import * as UC from '@uploadcare/file-uploader';
+import { Subject, Observable } from 'rxjs';
+
+export interface UploadedFile {
+  uuid: string;
+  cdnUrl: string;
+  name: string;
+}
+
+@Injectable({
+  providedIn: 'root',
+})
+export class FileUploaderService {
+  private uploadedFilesSubject = new Subject<UploadedFile>();
+  public uploadedFiles$: Observable<UploadedFile> =
+    this.uploadedFilesSubject.asObservable();
+
+  private initialized = false;
+
+  initializeUploader(): void {
+    if (!this.initialized) {
+      UC.defineComponents(UC);
+      this.initialized = true;
+    }
+  }
+
+  handleUploadSuccess(event: CustomEvent): void {
+    const { uuid, cdnUrl, name } = event.detail;
+    this.uploadedFilesSubject.next({ uuid, cdnUrl, name });
+  }
+}
+```
+
+Use the service in your component:
+
+```typescript file-uploader.component.ts
+import {
+  Component,
+  OnInit,
+  ViewChild,
+  ElementRef,
+  CUSTOM_ELEMENTS_SCHEMA,
+} from '@angular/core';
+import { FileUploaderService } from './services/file-uploader.service';
+
+@Component({
+  selector: 'app-file-uploader',
+  standalone: true,
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
+  template: `
+    <div>
+      <uc-config
+        ctx-name="my-uploader"
+        [attr.pubkey]="publicKey"
+      ></uc-config>
+      <uc-file-uploader-regular
+        ctx-name="my-uploader"
+      ></uc-file-uploader-regular>
+      <uc-upload-ctx-provider
+        #ctxProvider
+        ctx-name="my-uploader"
+      ></uc-upload-ctx-provider>
+    </div>
+  `,
+})
+export class FileUploaderComponent implements OnInit {
+  @ViewChild('ctxProvider') ctxProviderRef!: ElementRef;
+
+  publicKey = 'YOUR_PUBLIC_KEY';
+
+  constructor(private uploaderService: FileUploaderService) {
+    this.uploaderService.uploadedFiles$.subscribe((file) => {
+      console.log('Uploaded file:', file);
+      // Handle uploaded file
+    });
+  }
+
+  ngOnInit(): void {
+    this.uploaderService.initializeUploader();
+  }
+
+  ngAfterViewInit(): void {
+    const ctxProvider = this.ctxProviderRef.nativeElement;
+    ctxProvider.addEventListener(
+      'file-upload-success',
+      this.uploaderService.handleUploadSuccess.bind(this.uploaderService)
+    );
+  }
+}
+```
+
+## Form Integration
+
+Integrate with Angular Reactive Forms:
+
+```typescript form-with-uploader.component.ts
+import {
+  Component,
+  OnInit,
+  ViewChild,
+  ElementRef,
+  CUSTOM_ELEMENTS_SCHEMA,
+} from '@angular/core';
+import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import * as UC from '@uploadcare/file-uploader';
+import '@uploadcare/file-uploader/index.css';
+
+@Component({
+  selector: 'app-form-with-uploader',
+  standalone: true,
+  imports: [ReactiveFormsModule],
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
+  template: `
+    <form [formGroup]="uploadForm" (ngSubmit)="onSubmit()">
+      <uc-config
+        ctx-name="my-uploader"
+        [attr.pubkey]="publicKey"
+        [attr.multiple]="true"
+      ></uc-config>
+      <uc-file-uploader-regular ctx-name="my-uploader">
+        <uc-form-input ctx-name="my-uploader" name="files"></uc-form-input>
+      </uc-file-uploader-regular>
+      <uc-upload-ctx-provider
+        #ctxProvider
+        ctx-name="my-uploader"
+      ></uc-upload-ctx-provider>
+      <button type="submit">Submit</button>
+    </form>
+  `,
+})
+export class FormWithUploaderComponent implements OnInit {
+  @ViewChild('ctxProvider') ctxProviderRef!: ElementRef;
+
+  publicKey = 'YOUR_PUBLIC_KEY';
+  uploadForm: FormGroup;
+  uploadedFiles: string[] = [];
+
+  constructor(private fb: FormBuilder) {
+    this.uploadForm = this.fb.group({
+      files: [[]],
+    });
+  }
+
+  ngOnInit(): void {
+    UC.defineComponents(UC);
+  }
+
+  ngAfterViewInit(): void {
+    const ctxProvider = this.ctxProviderRef.nativeElement;
+    ctxProvider.addEventListener(
+      'file-upload-success',
+      this.handleUploadSuccess.bind(this)
+    );
+  }
+
+  handleUploadSuccess(event: CustomEvent): void {
+    const { uuid } = event.detail;
+    this.uploadedFiles.push(uuid);
+    this.uploadForm.patchValue({ files: this.uploadedFiles });
+  }
+
+  onSubmit(): void {
+    console.log('Form data:', this.uploadForm.value);
+    // Send to your API
+  }
+}
+```
+
+## Configuration Options
+
+Pass configuration through attributes:
+
+```html
+<uc-config
+  ctx-name="my-uploader"
+  [attr.pubkey]="publicKey"
+  [attr.multiple]="true"
+  [attr.img-only]="false"
+  attr.source-list="local, url, camera, dropbox"
+  [attr.max-local-file-size-bytes]="52428800"
+></uc-config>
+```
+
+<Note>
+Use `[attr.property-name]` syntax to bind Angular properties to Web Component attributes.
+</Note>
+
+## Available Solutions
+
+<Tabs>
+  <Tab title="Regular">
+    ```html
+    <uc-file-uploader-regular ctx-name="my-uploader"></uc-file-uploader-regular>
+    ```
+    Full-featured modal uploader.
+  </Tab>
+  <Tab title="Inline">
+    ```html
+    <uc-file-uploader-inline ctx-name="my-uploader"></uc-file-uploader-inline>
+    ```
+    Inline uploader for embedded use.
+  </Tab>
+  <Tab title="Minimal">
+    ```html
+    <uc-file-uploader-minimal ctx-name="my-uploader"></uc-file-uploader-minimal>
+    ```
+    Minimalist uploader.
+  </Tab>
+</Tabs>
+
+## Custom Styling
+
+Add styles to your component:
+
+```typescript
+@Component({
+  selector: 'app-file-uploader',
+  styles: [`
+    uc-file-uploader-regular {
+      --uc-primary-color: #dd0031;
+      --uc-secondary-color: #c3002f;
+      --uc-border-radius: 8px;
+    }
+  `],
+  // ...
+})
+```
+
+## Environment Configuration
+
+Store your public key in environment files:
+
+```typescript environments/environment.ts
+export const environment = {
+  production: false,
+  uploadcarePublicKey: 'YOUR_PUBLIC_KEY',
+};
+```
+
+Use in your component:
+
+```typescript
+import { environment } from '../environments/environment';
+
+@Component({
+  // ...
+})
+export class FileUploaderComponent {
+  publicKey = environment.uploadcarePublicKey;
+}
+```
+
+## Best Practices
+
+<Steps>
+  <Step title="Add CUSTOM_ELEMENTS_SCHEMA">
+    Always include `CUSTOM_ELEMENTS_SCHEMA` in your module or component to avoid Angular errors.
+  </Step>
+  <Step title="Initialize Once">
+    Call `defineComponents()` once, preferably in a service or the root component.
+  </Step>
+  <Step title="Use Services">
+    Create a service to manage uploader state and events for better code organization.
+  </Step>
+  <Step title="Bind with [attr.]">
+    Use Angular's `[attr.property]` syntax to bind dynamic values to Web Component attributes.
+  </Step>
+  <Step title="Clean Up Listeners">
+    Remove event listeners in `ngOnDestroy` to prevent memory leaks.
+  </Step>
+</Steps>
+
+## Troubleshooting
+
+### Unknown Element Error
+
+If you see errors about unknown custom elements, ensure `CUSTOM_ELEMENTS_SCHEMA` is added to your module or component.
+
+### Change Detection Issues
+
+If Angular doesn't detect changes from Web Component events, use `ChangeDetectorRef`:
+
+```typescript
+import { ChangeDetectorRef } from '@angular/core';
+
+constructor(private cdr: ChangeDetectorRef) {}
+
+handleUploadSuccess(event: CustomEvent): void {
+  // Update state
+  this.cdr.detectChanges();
+}
+```
+
+### CSS Not Loading
+
+Import the CSS in your component or global styles:
+
+```typescript
+import '@uploadcare/file-uploader/index.css';
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Configuration" icon="gear" href="/api/configuration-options">
+    Explore all configuration options
+  </Card>
+  <Card title="Events API" icon="bolt" href="/api/types/events">
+    Learn about available events
+  </Card>
+  <Card title="Live Examples" icon="code" href="https://github.com/uploadcare/file-uploader-examples/tree/main/examples/angular-uploader">
+    View complete Angular examples
+  </Card>
+  <Card title="Styling" icon="palette" href="/customization/styling">
+    Learn how to customize the appearance
+  </Card>
+</CardGroup>

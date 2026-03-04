@@ -1,0 +1,301 @@
+---
+title: "Events"
+description: "Event types and payloads for the File Uploader"
+---
+
+The File Uploader emits various events throughout the upload lifecycle. All events are dispatched from the `uc-upload-ctx-provider` element.
+
+## Event Types
+
+```typescript
+export enum EventType {
+  // File-level events
+  FILE_ADDED = 'file-added',
+  FILE_REMOVED = 'file-removed',
+  FILE_UPLOAD_START = 'file-upload-start',
+  FILE_UPLOAD_PROGRESS = 'file-upload-progress',
+  FILE_UPLOAD_SUCCESS = 'file-upload-success',
+  FILE_UPLOAD_FAILED = 'file-upload-failed',
+  
+  // Collection-level events
+  UPLOAD_START = 'upload-start',
+  UPLOAD_PROGRESS = 'upload-progress',
+  UPLOAD_SUCCESS = 'upload-success',
+  UPLOAD_FAILED = 'upload-failed',
+  
+  // UI events
+  MODAL_OPEN = 'modal-open',
+  MODAL_CLOSE = 'modal-close',
+  ACTIVITY_CHANGE = 'activity-change',
+  DONE_CLICK = 'done-click',
+  
+  // Other events
+  CHANGE = 'change',
+  CLOUD_MODIFICATION = 'cloud-modification',
+  COMMON_UPLOAD_START = 'common-upload-start',
+  COMMON_UPLOAD_PROGRESS = 'common-upload-progress',
+}
+```
+
+## Event Payloads
+
+### File Events
+
+File events include an `OutputFileEntry` in the detail:
+
+```typescript
+type FileEventPayload = {
+  detail: OutputFileEntry;
+};
+```
+
+#### file-added
+Fired when a file is added to the upload collection:
+
+```typescript
+uploaderCtx.addEventListener('file-added', (e: CustomEvent<OutputFileEntry>) => {
+  const file = e.detail;
+  console.log('File added:', file.name);
+});
+```
+
+#### file-removed
+Fired when a file is removed from the collection:
+
+```typescript
+uploaderCtx.addEventListener('file-removed', (e: CustomEvent<OutputFileEntry>) => {
+  const file = e.detail;
+  console.log('File removed:', file.name);
+});
+```
+
+#### file-upload-start
+Fired when an individual file upload starts:
+
+```typescript
+uploaderCtx.addEventListener('file-upload-start', (e: CustomEvent<OutputFileEntry>) => {
+  const file = e.detail;
+  console.log('Uploading:', file.name);
+});
+```
+
+#### file-upload-progress
+Fired during individual file upload progress:
+
+```typescript
+uploaderCtx.addEventListener('file-upload-progress', (e: CustomEvent<OutputFileEntry>) => {
+  const file = e.detail;
+  console.log(`${file.name}: ${file.uploadProgress}%`);
+});
+```
+
+#### file-upload-success
+Fired when an individual file uploads successfully:
+
+```typescript
+uploaderCtx.addEventListener('file-upload-success', (e: CustomEvent<OutputFileEntry>) => {
+  const file = e.detail;
+  console.log('Success:', file.name);
+  console.log('CDN URL:', file.cdnUrl);
+  console.log('UUID:', file.uuid);
+});
+```
+
+#### file-upload-failed
+Fired when an individual file upload fails:
+
+```typescript
+uploaderCtx.addEventListener('file-upload-failed', (e: CustomEvent<OutputFileEntry>) => {
+  const file = e.detail;
+  console.error('Failed:', file.name);
+  file.errors.forEach(err => console.error(err.message));
+});
+```
+
+### Collection Events
+
+Collection events include an `OutputCollectionState` in the detail:
+
+```typescript
+type CollectionEventPayload = {
+  detail: OutputCollectionState;
+};
+```
+
+#### upload-start
+Fired when batch upload starts:
+
+```typescript
+uploaderCtx.addEventListener('upload-start', (e: CustomEvent<OutputCollectionState>) => {
+  const state = e.detail;
+  console.log('Starting upload of', state.totalCount, 'files');
+});
+```
+
+#### upload-progress
+Fired during batch upload progress:
+
+```typescript
+uploaderCtx.addEventListener('upload-progress', (e: CustomEvent<OutputCollectionState>) => {
+  const state = e.detail;
+  console.log('Progress:', state.progress + '%');
+  console.log('Uploaded:', state.successCount, '/', state.totalCount);
+});
+```
+
+#### upload-success
+Fired when all files upload successfully:
+
+```typescript
+uploaderCtx.addEventListener('upload-success', (e: CustomEvent<OutputCollectionState>) => {
+  const state = e.detail;
+  console.log('All files uploaded!');
+  
+  // Access file group if enabled
+  if (state.group) {
+    console.log('Group URL:', state.group.cdnUrl);
+  }
+  
+  // Process individual files
+  state.successEntries.forEach(file => {
+    console.log('File URL:', file.cdnUrl);
+  });
+});
+```
+
+#### upload-failed
+Fired when batch upload fails:
+
+```typescript
+uploaderCtx.addEventListener('upload-failed', (e: CustomEvent<OutputCollectionState>) => {
+  const state = e.detail;
+  console.error('Upload failed!');
+  console.error('Failed:', state.failedCount, 'files');
+  
+  state.failedEntries.forEach(file => {
+    console.error('Failed file:', file.name);
+  });
+});
+```
+
+### UI Events
+
+#### modal-open
+Fired when a modal opens:
+
+```typescript
+uploaderCtx.addEventListener('modal-open', (e: CustomEvent<{ name: string }>) => {
+  console.log('Modal opened:', e.detail.name);
+});
+```
+
+#### modal-close
+Fired when a modal closes:
+
+```typescript
+uploaderCtx.addEventListener('modal-close', (e: CustomEvent<{ name: string }>) => {
+  console.log('Modal closed:', e.detail.name);
+});
+```
+
+#### activity-change
+Fired when the current activity changes:
+
+```typescript
+uploaderCtx.addEventListener('activity-change', (e: CustomEvent<string>) => {
+  console.log('Activity changed to:', e.detail);
+});
+```
+
+#### done-click
+Fired when the "Done" button is clicked:
+
+```typescript
+uploaderCtx.addEventListener('done-click', (e: CustomEvent<OutputCollectionState>) => {
+  const state = e.detail;
+  console.log('Done clicked with', state.successCount, 'successful uploads');
+  
+  // Perform action after uploads complete
+  if (state.isSuccess) {
+    // All files uploaded successfully
+    submitForm(state.successEntries);
+  }
+});
+```
+
+## TypeScript Event Handling
+
+For type-safe event handling, use typed event listeners:
+
+```typescript
+import { EventType } from '@uploadcare/file-uploader';
+import type { OutputFileEntry, OutputCollectionState } from '@uploadcare/file-uploader';
+
+const uploaderCtx = document.querySelector('uc-upload-ctx-provider');
+
+// Typed file event
+uploaderCtx.addEventListener(
+  EventType.FILE_UPLOAD_SUCCESS,
+  (e: CustomEvent<OutputFileEntry>) => {
+    const file = e.detail;
+    // TypeScript knows file has all OutputFileEntry properties
+    console.log(file.cdnUrl, file.uuid);
+  }
+);
+
+// Typed collection event
+uploaderCtx.addEventListener(
+  EventType.UPLOAD_SUCCESS,
+  (e: CustomEvent<OutputCollectionState>) => {
+    const state = e.detail;
+    // TypeScript knows state has all OutputCollectionState properties
+    console.log(state.progress, state.successCount);
+  }
+);
+```
+
+## Complete Example
+
+```typescript
+const uploaderCtx = document.querySelector('uc-upload-ctx-provider');
+
+// Track upload progress
+uploaderCtx.addEventListener('upload-start', (e) => {
+  console.log('Upload started');
+  document.querySelector('#status').textContent = 'Uploading...';
+});
+
+uploaderCtx.addEventListener('upload-progress', (e) => {
+  const state = e.detail;
+  document.querySelector('#progress-bar').value = state.progress;
+  document.querySelector('#count').textContent = 
+    `${state.successCount} / ${state.totalCount}`;
+});
+
+uploaderCtx.addEventListener('upload-success', (e) => {
+  const state = e.detail;
+  console.log('All uploads complete!');
+  document.querySelector('#status').textContent = 'Complete!';
+  
+  // Process results
+  const urls = state.successEntries.map(entry => entry.cdnUrl);
+  console.log('Uploaded files:', urls);
+});
+
+uploaderCtx.addEventListener('upload-failed', (e) => {
+  const state = e.detail;
+  console.error('Upload failed');
+  document.querySelector('#status').textContent = 'Failed!';
+  
+  // Show errors
+  state.errors.forEach(error => {
+    console.error(error.type, error.message);
+  });
+});
+```
+
+## See Also
+
+- [OutputFileEntry](/api/types/output-file-entry) - File entry type
+- [OutputCollectionState](/api/types/output-collection-state) - Collection state type
+- [Events Guide](/advanced/events) - Detailed event handling guide

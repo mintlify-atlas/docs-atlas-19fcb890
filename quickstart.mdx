@@ -1,80 +1,400 @@
 ---
-title: "Quickstart"
-description: "Start building awesome documentation in minutes"
+title: Quick Start
+description: Get started with Uploadcare File Uploader in minutes - upload your first file
 ---
 
-## Get started in three steps
+# Quick Start Guide
 
-Get your documentation site running locally and make your first customization.
+This guide will help you set up a working file uploader in minutes. By the end, you'll have a fully functional upload form ready to accept files.
 
-### Step 1: Set up your local environment
+## Prerequisites
 
-<AccordionGroup>
-  <Accordion icon="copy" title="Clone your docs locally">
-    During the onboarding process, you created a GitHub repository with your docs content if you didn't already have one. You can find a link to this repository in your [dashboard](https://dashboard.mintlify.com).
-    
-    To clone the repository locally so that you can make and preview changes to your docs, follow the [Cloning a repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) guide in the GitHub docs.
-  </Accordion>
-  <Accordion icon="rectangle-terminal" title="Start the preview server">
-    1. Install the Mintlify CLI: `npm i -g mint`
-    2. Navigate to your docs directory and run: `mint dev`
-    3. Open `http://localhost:3000` to see your docs live!
-    
-    <Tip>Your preview updates automatically as you edit files.</Tip>
-  </Accordion>
-</AccordionGroup>
+Before you begin, you'll need:
 
-### Step 2: Deploy your changes
+1. An Uploadcare account ([sign up for free](https://app.uploadcare.com/accounts/signup/))
+2. Your Public API key from the [Uploadcare dashboard](https://app.uploadcare.com/projects/-/api-keys/)
 
-<AccordionGroup>
-  <Accordion icon="github" title="Install our GitHub app">
-    Install the Mintlify GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app).
-    
-    Our GitHub app automatically deploys your changes to your docs site, so you don't need to manage deployments yourself.
-</Accordion>
-<Accordion icon="palette" title="Update your site name and colors">
-    For a first change, let's update the name and colors of your docs site.
+<Warning>
+  Keep your Public Key accessible - you'll need it in the next steps. Never commit secret keys to your repository.
+</Warning>
 
-    1. Open `docs.json` in your editor.
-    2. Change the `"name"` field to your project name.
-    3. Update the `"colors"` to match your brand.
-    4. Save and see your changes instantly at `http://localhost:3000`.
+## Installation
 
-    <Tip>Try changing the primary color to see an immediate difference!</Tip>
-  </Accordion>
-</AccordionGroup>
+First, install File Uploader:
 
-### Step 3: Go live
+<CodeGroup>
 
-<Accordion icon="rocket" title="Publish your docs">
-  1. Commit and push your changes.
-  2. Your docs will update and be live in moments!
-</Accordion>
+```bash npm
+npm install @uploadcare/file-uploader
+```
 
-## Next steps
+```bash yarn
+yarn add @uploadcare/file-uploader
+```
 
-Now that you have your docs running, explore these key features:
+```bash pnpm
+pnpm add @uploadcare/file-uploader
+```
 
-<CardGroup cols={2}>
+</CodeGroup>
 
-<Card title="Write Content" icon="pen-to-square" href="/essentials/markdown">
-  Learn MDX syntax and start writing your documentation.
-</Card>
+## Basic Setup
 
-<Card title="Customize style" icon="palette" href="/essentials/settings">
-  Make your docs match your brand perfectly.
-</Card>
+Follow these steps to create your first uploader:
 
-<Card title="Add code examples" icon="square-code" href="/essentials/code">
-  Include syntax-highlighted code blocks.
-</Card>
+<Steps>
 
-<Card title="API documentation" icon="code" href="/api-reference/introduction">
-  Auto-generate API docs from OpenAPI specs.
-</Card>
+<Step title="Import and define components">
 
-</CardGroup>
+In your JavaScript file, import File Uploader and define the web components:
+
+```javascript
+import * as UC from '@uploadcare/file-uploader';
+import '@uploadcare/file-uploader/index.css';
+
+UC.defineComponents(UC);
+```
+
+The `defineComponents()` function registers all File Uploader components as custom elements.
+
+</Step>
+
+<Step title="Add uploader to your HTML">
+
+Add the uploader component and configuration to your HTML:
+
+```html
+<uc-file-uploader-regular ctx-name="my-uploader"></uc-file-uploader-regular>
+<uc-config ctx-name="my-uploader" pubkey="YOUR_PUBLIC_KEY"></uc-config>
+```
+
+Replace `YOUR_PUBLIC_KEY` with your actual Public API key from Uploadcare.
 
 <Note>
-  **Need help?** See our [full documentation](https://mintlify.com/docs) or join our [community](https://mintlify.com/community).
+  The `ctx-name` attribute links the uploader and config together. Use the same value for both components.
 </Note>
+
+</Step>
+
+<Step title="Test your uploader">
+
+Open your application in a browser. You should see an "Upload files" button. Click it to open the upload dialog and select a file from your device.
+
+</Step>
+
+</Steps>
+
+## Complete Example
+
+Here's a complete working example:
+
+<CodeGroup>
+
+```html HTML + CDN
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>File Uploader Demo</title>
+  <link
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/@uploadcare/file-uploader@1/web/uc-file-uploader-regular.min.css"
+  />
+</head>
+<body>
+  <uc-file-uploader-regular ctx-name="my-uploader"></uc-file-uploader-regular>
+  <uc-config ctx-name="my-uploader" pubkey="YOUR_PUBLIC_KEY"></uc-config>
+
+  <script type="module">
+    import * as UC from 'https://cdn.jsdelivr.net/npm/@uploadcare/file-uploader@1/web/file-uploader.min.js';
+    UC.defineComponents(UC);
+  </script>
+</body>
+</html>
+```
+
+```javascript JavaScript
+import * as UC from '@uploadcare/file-uploader';
+import '@uploadcare/file-uploader/index.css';
+
+UC.defineComponents(UC);
+
+// Add to your HTML:
+// <uc-file-uploader-regular ctx-name="my-uploader"></uc-file-uploader-regular>
+// <uc-config ctx-name="my-uploader" pubkey="YOUR_PUBLIC_KEY"></uc-config>
+```
+
+```typescript React
+import { useEffect } from 'react';
+import * as UC from '@uploadcare/file-uploader';
+import '@uploadcare/file-uploader/index.css';
+
+function FileUploader() {
+  useEffect(() => {
+    UC.defineComponents(UC);
+  }, []);
+
+  return (
+    <>
+      <uc-file-uploader-regular ctx-name="my-uploader"></uc-file-uploader-regular>
+      <uc-config ctx-name="my-uploader" pubkey="YOUR_PUBLIC_KEY"></uc-config>
+    </>
+  );
+}
+
+export default FileUploader;
+```
+
+```vue Vue
+<script setup>
+import { onMounted } from 'vue';
+import * as UC from '@uploadcare/file-uploader';
+import '@uploadcare/file-uploader/index.css';
+
+onMounted(() => {
+  UC.defineComponents(UC);
+});
+</script>
+
+<template>
+  <uc-file-uploader-regular ctx-name="my-uploader"></uc-file-uploader-regular>
+  <uc-config ctx-name="my-uploader" pubkey="YOUR_PUBLIC_KEY"></uc-config>
+</template>
+```
+
+</CodeGroup>
+
+## Using the Inline Uploader
+
+For a different layout, try the inline uploader that's always visible on the page:
+
+```html
+<uc-file-uploader-inline ctx-name="my-uploader"></uc-file-uploader-inline>
+<uc-config ctx-name="my-uploader" pubkey="YOUR_PUBLIC_KEY"></uc-config>
+```
+
+## Handling Upload Events
+
+To handle uploaded files, listen for events using the Upload Context Provider:
+
+```html
+<uc-file-uploader-regular ctx-name="my-uploader"></uc-file-uploader-regular>
+<uc-config ctx-name="my-uploader" pubkey="YOUR_PUBLIC_KEY"></uc-config>
+<uc-upload-ctx-provider ctx-name="my-uploader"></uc-upload-ctx-provider>
+```
+
+```javascript
+const uploadCtxProvider = document.querySelector('uc-upload-ctx-provider');
+
+uploadCtxProvider.addEventListener('change', (event) => {
+  const { successEntries } = event.detail;
+  
+  successEntries.forEach((entry) => {
+    console.log('File uploaded:', entry);
+    console.log('CDN URL:', entry.cdnUrl);
+    console.log('UUID:', entry.uuid);
+  });
+});
+```
+
+<Note>
+  The `change` event fires whenever the upload state changes. Use `successEntries` to access successfully uploaded files.
+</Note>
+
+## Common Configuration Options
+
+Customize your uploader with configuration attributes:
+
+### Multiple Files
+
+```html
+<uc-config 
+  ctx-name="my-uploader" 
+  pubkey="YOUR_PUBLIC_KEY"
+  multiple="true"
+  multiple-max="10"
+></uc-config>
+```
+
+### Images Only
+
+```html
+<uc-config 
+  ctx-name="my-uploader" 
+  pubkey="YOUR_PUBLIC_KEY"
+  img-only="true"
+></uc-config>
+```
+
+### File Size Limit
+
+```html
+<uc-config 
+  ctx-name="my-uploader" 
+  pubkey="YOUR_PUBLIC_KEY"
+  max-local-file-size-bytes="10485760"
+></uc-config>
+```
+
+### Specific File Types
+
+```html
+<uc-config 
+  ctx-name="my-uploader" 
+  pubkey="YOUR_PUBLIC_KEY"
+  accept="image/*, .pdf, .doc, .docx"
+></uc-config>
+```
+
+### Custom Upload Sources
+
+```html
+<uc-config 
+  ctx-name="my-uploader" 
+  pubkey="YOUR_PUBLIC_KEY"
+  source-list="local, url, camera, dropbox, gdrive"
+></uc-config>
+```
+
+Available sources: `local`, `url`, `camera`, `dropbox`, `gdrive`, `gphotos`, `instagram`, `facebook`, `onedrive`, `box`, `vk`, `evernote`, `flickr`, `huddle`
+
+## Getting File Information
+
+When a file is successfully uploaded, you receive an `OutputFileEntry` object with comprehensive information:
+
+```javascript
+{
+  status: 'success',
+  uuid: 'a7d9f5e8-3b1c-4a2e-9f8d-1c5e7b9a3d4f',
+  cdnUrl: 'https://ucarecdn.com/a7d9f5e8-3b1c-4a2e-9f8d-1c5e7b9a3d4f/',
+  name: 'my-image.jpg',
+  size: 204800,
+  isImage: true,
+  mimeType: 'image/jpeg',
+  uploadProgress: 100,
+  fileInfo: { /* full Uploadcare file info */ },
+  // ... more properties
+}
+```
+
+Key properties:
+
+- `uuid` - Unique file identifier
+- `cdnUrl` - Direct URL to access the file
+- `name` - Original filename
+- `size` - File size in bytes
+- `fileInfo` - Complete file metadata from Uploadcare API
+
+## Using Uploaded Files
+
+Once uploaded, use the `cdnUrl` to display or download files:
+
+### Display an Image
+
+```javascript
+uploadCtxProvider.addEventListener('change', (event) => {
+  const { successEntries } = event.detail;
+  
+  successEntries.forEach((entry) => {
+    if (entry.isImage) {
+      const img = document.createElement('img');
+      img.src = entry.cdnUrl;
+      document.body.appendChild(img);
+    }
+  });
+});
+```
+
+### Apply Image Transformations
+
+Uploadcare provides URL-based image transformations:
+
+```javascript
+// Resize to 800x600
+const resizedUrl = `${entry.cdnUrl}-/resize/800x600/`;
+
+// Crop to 400x400 center
+const croppedUrl = `${entry.cdnUrl}-/crop/400x400/center/`;
+
+// Convert to WebP
+const webpUrl = `${entry.cdnUrl}-/format/webp/`;
+
+// Chain transformations
+const transformedUrl = `${entry.cdnUrl}-/resize/800x/-/quality/smart/-/format/auto/`;
+```
+
+## Debugging
+
+Enable debug mode to see detailed logs in the console:
+
+```html
+<uc-config 
+  ctx-name="my-uploader" 
+  pubkey="YOUR_PUBLIC_KEY"
+  debug="true"
+></uc-config>
+```
+
+<Note>
+  Debug mode logs configuration changes, upload progress, and error details. Disable it in production.
+</Note>
+
+## Troubleshooting
+
+### Components Not Rendering
+
+Make sure you've called `defineComponents()` before the HTML is parsed:
+
+```javascript
+import * as UC from '@uploadcare/file-uploader';
+UC.defineComponents(UC);
+```
+
+### CSS Not Loading
+
+Import the CSS file in your JavaScript:
+
+```javascript
+import '@uploadcare/file-uploader/index.css';
+```
+
+Or add it to your HTML:
+
+```html
+<link rel="stylesheet" href="path/to/node_modules/@uploadcare/file-uploader/dist/index.css">
+```
+
+### "Invalid public key" Error
+
+Verify your public key:
+
+1. Check for typos in the `pubkey` attribute
+2. Ensure you're using the Public Key, not the Secret Key
+3. Confirm the key is from the correct Uploadcare project
+
+### CORS Errors
+
+Uploadcare handles CORS automatically. If you see CORS errors, check:
+
+1. You're using a valid public key
+2. Your domain is not blocked in Uploadcare project settings
+
+## Next Steps
+
+Now that you have a working uploader, explore more features:
+
+<CardGroup cols={2}>
+  <Card title="Configuration" icon="gear" href="/concepts/configuration">
+    Explore all configuration options
+  </Card>
+  <Card title="Customization" icon="palette" href="/advanced/styling">
+    Customize the appearance
+  </Card>
+  <Card title="Events" icon="bolt" href="/advanced/events">
+    Handle upload events
+  </Card>
+  <Card title="Validation" icon="shield-check" href="/advanced/validation">
+    Add file validation rules
+  </Card>
+</CardGroup>

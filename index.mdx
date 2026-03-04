@@ -1,97 +1,298 @@
 ---
-title: "Introduction"
-description: "Welcome to the new home for your documentation"
+title: "Uploadcare File Uploader"
+description: "Stack-agnostic library for uploading, processing, and editing images on-the-fly"
+mode: "custom"
 ---
 
-## Setting up
+<div className="relative overflow-hidden bg-gradient-to-br from-[#040404] via-[#1a1a1a] to-[#0a0a0a] dark:from-[#040404] dark:via-[#1a1a1a] dark:to-[#0a0a0a]">
+  <div className="absolute inset-0 bg-[linear-gradient(to_right,#fbd33808_1px,transparent_1px),linear-gradient(to_bottom,#fbd33808_1px,transparent_1px)] bg-[size:4rem_4rem]" />
+  <div className="relative max-w-7xl mx-auto px-6 sm:px-8 py-20 lg:py-24">
+    <div className="lg:grid lg:grid-cols-12 lg:gap-8 items-center">
+      <div className="lg:col-span-7">
+        <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white leading-tight">
+          File uploads made
+          <span className="block text-[#fbd338] mt-2">simple and powerful</span>
+        </h1>
+        <p className="mt-6 text-lg sm:text-xl text-gray-300 max-w-2xl">
+          Add file uploads to your app with a stack-agnostic library. Upload from multiple sources, process images on-the-fly, and customize everything to fit your needs.
+        </p>
+        <div className="mt-8 flex flex-wrap gap-4">
+          <a
+            href="/quickstart"
+            className="inline-flex items-center justify-center px-6 py-3 text-base font-semibold text-[#040404] bg-[#fbd338] rounded-lg hover:bg-[#fbe483] transition-colors shadow-lg"
+          >
+            Get Started
+            <svg className="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+            </svg>
+          </a>
+          <a
+            href="/api/configuration-options"
+            className="inline-flex items-center justify-center px-6 py-3 text-base font-semibold text-white bg-white/10 border border-white/30 rounded-lg hover:bg-white/20 transition-colors backdrop-blur-sm"
+          >
+            API Reference
+          </a>
+        </div>
+      </div>
+      <div className="hidden lg:block lg:col-span-5 mt-12 lg:mt-0">
+        <div className="relative">
+          <div className="absolute inset-0 bg-[#fbd338] opacity-20 blur-3xl rounded-full" />
+          <img
+            src="https://ucarecdn.com/916a1054-ca44-4c4a-9f7b-99fa499043d9/-/preview/"
+            alt="Uploadcare File Uploader Interface"
+            className="relative rounded-2xl shadow-2xl border border-white/10"
+            noZoom
+          />
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
-Get your documentation site up and running in minutes.
+<div className="mt-16 mb-16 max-w-5xl mx-auto px-6">
+  <div className="text-center mb-12">
+    <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Get started in minutes</h2>
+    <p className="mt-4 text-base text-gray-600 dark:text-gray-400">Install the library and add your first file uploader</p>
+  </div>
 
-<Card
-  title="Start here"
-  icon="rocket"
-  href="/quickstart"
-  horizontal
->
-  Follow our three step quickstart guide.
-</Card>
+  <Steps>
+    <Step title="Install the package">
+      Install the Uploadcare File Uploader via npm, yarn, or pnpm:
 
-## Make it yours
+      <CodeGroup>
+      ```bash npm
+      npm install @uploadcare/file-uploader
+      ```
 
-Design a docs site that looks great and empowers your users.
+      ```bash yarn
+      yarn add @uploadcare/file-uploader
+      ```
 
-<Columns cols={2}>
-  <Card
-    title="Edit locally"
-    icon="pen-to-square"
-    href="/development"
-  >
-    Edit your docs locally and preview them in real time.
-  </Card>
-  <Card
-    title="Customize your site"
-    icon="palette"
-    href="/essentials/settings"
-  >
-    Customize the design and colors of your site to match your brand.
-  </Card>
-    <Card
-    title="Set up navigation"
-    icon="map"
-    href="/essentials/navigation"
-  >
-    Organize your docs to help users find what they need and succeed with your product.
-  </Card>
-  <Card
-    title="API documentation"
-    icon="terminal"
-    href="/api-reference/introduction"
-  >
-    Auto-generate API documentation from OpenAPI specifications.
-  </Card>
-</Columns>
+      ```bash pnpm
+      pnpm add @uploadcare/file-uploader
+      ```
+      </CodeGroup>
 
-## Create beautiful pages
+      Or use it directly from a CDN:
 
-Everything you need to create world-class documentation.
+      ```html
+      <script type="module">
+        import * as UC from 'https://cdn.jsdelivr.net/npm/@uploadcare/file-uploader@1/web/file-uploader.min.js';
+        UC.defineComponents(UC);
+      </script>
+      ```
+    </Step>
 
-<Columns cols={2}>
-  <Card
-    title="Write with MDX"
-    icon="pen-fancy"
-    href="/essentials/markdown"
-  >
-    Use MDX to style your docs pages.
-  </Card>
-  <Card
-    title="Code samples"
-    icon="code"
-    href="/essentials/code"
-  >
-    Add sample code to demonstrate how to use your product.
-  </Card>
-  <Card
-    title="Images"
-    icon="image"
-    href="/essentials/images"
-  >
-    Display images and other media.
-  </Card>
-  <Card
-    title="Reusable snippets"
-    icon="recycle"
-    href="/essentials/reusable-snippets"
-  >
-    Write once and reuse across your docs.
-  </Card>
-</Columns>
+    <Step title="Get your API key">
+      Sign up for a free [Uploadcare account](https://app.uploadcare.com/accounts/signup/) and get your Public API key from the [project dashboard](https://app.uploadcare.com/projects/-/api-keys/).
+    </Step>
 
-## Need inspiration?
+    <Step title="Add the uploader to your page">
+      Import the components and add the uploader to your HTML:
 
-<Card
-  title="See complete examples"
-  icon="stars"
-  href="https://mintlify.com/customers"
->
-  Browse our showcase of exceptional documentation sites.
-</Card>
+      ```javascript
+      import * as UC from '@uploadcare/file-uploader';
+
+      UC.defineComponents(UC);
+      ```
+
+      ```html
+      <link
+        rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/@uploadcare/file-uploader@1/web/uc-file-uploader-regular.min.css"
+      />
+
+      <uc-config ctx-name="my-uploader" pubkey="YOUR_PUBLIC_KEY"></uc-config>
+      <uc-file-uploader-regular ctx-name="my-uploader"></uc-file-uploader-regular>
+      ```
+
+      Replace `YOUR_PUBLIC_KEY` with your actual Uploadcare public key. The uploader is now ready to use!
+    </Step>
+  </Steps>
+</div>
+
+<div className="mt-16 mb-16 max-w-5xl mx-auto px-6">
+  <div className="text-center mb-12">
+    <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Key features</h2>
+    <p className="mt-4 text-base text-gray-600 dark:text-gray-400">Everything you need for modern file uploads</p>
+  </div>
+
+  <CardGroup cols={3}>
+    <Card title="Multiple upload sources" icon="cloud-arrow-up" href="/concepts/components">
+      Upload from local device, URL, camera, Dropbox, Google Drive, and more
+    </Card>
+    <Card title="Image editing" icon="wand-magic-sparkles" href="/solutions/cloud-image-editor">
+      Built-in editor with cropping, filters, and transformations
+    </Card>
+    <Card title="Large file handling" icon="file-arrow-up" href="/concepts/configuration">
+      Chunked uploads with resumable transfers for files of any size
+    </Card>
+    <Card title="Framework agnostic" icon="puzzle-piece" href="/integrations/react">
+      Web Components work with React, Vue, Angular, Svelte, or vanilla JS
+    </Card>
+    <Card title="TypeScript support" icon="code" href="/api/types/config-type">
+      Full type definitions with autocompletion and type checking
+    </Card>
+    <Card title="Customizable UI" icon="palette" href="/advanced/styling">
+      Pre-built themes or customize with CSS to match your brand
+    </Card>
+    <Card title="File validation" icon="shield-check" href="/advanced/validation">
+      Validate file types, sizes, and content before upload
+    </Card>
+    <Card title="Secure uploads" icon="lock" href="/advanced/secure-uploads">
+      Signed uploads and secure delivery for protected content
+    </Card>
+    <Card title="Localization" icon="globe" href="/advanced/localization">
+      Support for 30+ languages with custom locale definitions
+    </Card>
+  </CardGroup>
+</div>
+
+<div className="mt-16 mb-16 max-w-5xl mx-auto px-6">
+  <div className="text-center mb-12">
+    <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Choose your solution</h2>
+    <p className="mt-4 text-base text-gray-600 dark:text-gray-400">Pick the uploader that fits your use case</p>
+  </div>
+
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <a
+      href="/solutions/file-uploader-regular"
+      className="group block rounded-2xl border border-gray-200 dark:border-[#27272a] hover:border-[#fbd338] dark:hover:border-[#fbd338] transition-colors overflow-hidden bg-white dark:bg-[#1a1d27] no-underline"
+    >
+      <div className="h-48 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-[#0f1117] dark:to-[#1a1d27] flex items-center justify-center overflow-hidden border-b border-gray-200 dark:border-[#27272a]">
+        <div className="text-6xl">📁</div>
+      </div>
+      <div className="p-6">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white group-hover:text-[#040404] dark:group-hover:text-[#fbd338] transition-colors">
+          File Uploader Regular
+        </h3>
+        <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+          Full-featured modal uploader with all sources and options
+        </p>
+        <div className="mt-4 flex items-center text-sm font-medium text-gray-900 dark:text-white group-hover:text-[#040404] dark:group-hover:text-[#fbd338] transition-colors">
+          Learn more
+          <svg className="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        </div>
+      </div>
+    </a>
+
+    <a
+      href="/solutions/file-uploader-inline"
+      className="group block rounded-2xl border border-gray-200 dark:border-[#27272a] hover:border-[#fbd338] dark:hover:border-[#fbd338] transition-colors overflow-hidden bg-white dark:bg-[#1a1d27] no-underline"
+    >
+      <div className="h-48 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-[#0f1117] dark:to-[#1a1d27] flex items-center justify-center overflow-hidden border-b border-gray-200 dark:border-[#27272a]">
+        <div className="text-6xl">📋</div>
+      </div>
+      <div className="p-6">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white group-hover:text-[#040404] dark:group-hover:text-[#fbd338] transition-colors">
+          File Uploader Inline
+        </h3>
+        <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+          Embedded uploader that fits seamlessly into your page layout
+        </p>
+        <div className="mt-4 flex items-center text-sm font-medium text-gray-900 dark:text-white group-hover:text-[#040404] dark:group-hover:text-[#fbd338] transition-colors">
+          Learn more
+          <svg className="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        </div>
+      </div>
+    </a>
+
+    <a
+      href="/solutions/file-uploader-minimal"
+      className="group block rounded-2xl border border-gray-200 dark:border-[#27272a] hover:border-[#fbd338] dark:hover:border-[#fbd338] transition-colors overflow-hidden bg-white dark:bg-[#1a1d27] no-underline"
+    >
+      <div className="h-48 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-[#0f1117] dark:to-[#1a1d27] flex items-center justify-center overflow-hidden border-b border-gray-200 dark:border-[#27272a]">
+        <div className="text-6xl">⚡</div>
+      </div>
+      <div className="p-6">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white group-hover:text-[#040404] dark:group-hover:text-[#fbd338] transition-colors">
+          File Uploader Minimal
+        </h3>
+        <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+          Lightweight uploader for simple use cases with minimal UI
+        </p>
+        <div className="mt-4 flex items-center text-sm font-medium text-gray-900 dark:text-white group-hover:text-[#040404] dark:group-hover:text-[#fbd338] transition-colors">
+          Learn more
+          <svg className="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        </div>
+      </div>
+    </a>
+
+    <a
+      href="/solutions/cloud-image-editor"
+      className="group block rounded-2xl border border-gray-200 dark:border-[#27272a] hover:border-[#fbd338] dark:hover:border-[#fbd338] transition-colors overflow-hidden bg-white dark:bg-[#1a1d27] no-underline"
+    >
+      <div className="h-48 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-[#0f1117] dark:to-[#1a1d27] flex items-center justify-center overflow-hidden border-b border-gray-200 dark:border-[#27272a]">
+        <div className="text-6xl">🎨</div>
+      </div>
+      <div className="p-6">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white group-hover:text-[#040404] dark:group-hover:text-[#fbd338] transition-colors">
+          Cloud Image Editor
+        </h3>
+        <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+          Standalone image editor with cropping, filters, and enhancements
+        </p>
+        <div className="mt-4 flex items-center text-sm font-medium text-gray-900 dark:text-white group-hover:text-[#040404] dark:group-hover:text-[#fbd338] transition-colors">
+          Learn more
+          <svg className="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        </div>
+      </div>
+    </a>
+  </div>
+</div>
+
+<div className="mt-16 mb-16 max-w-5xl mx-auto px-6">
+  <div className="text-center mb-12">
+    <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Framework integration</h2>
+    <p className="mt-4 text-base text-gray-600 dark:text-gray-400">Works seamlessly with your favorite framework</p>
+  </div>
+
+  <CardGroup cols={3}>
+    <Card title="React" icon="react" href="/integrations/react">
+      Use File Uploader in React applications
+    </Card>
+    <Card title="Next.js" icon="n" href="/integrations/nextjs">
+      Server and client components for Next.js
+    </Card>
+    <Card title="Vue" icon="vuejs" href="/integrations/vue">
+      Vue 3 integration with Composition API
+    </Card>
+    <Card title="Angular" icon="angular" href="/integrations/angular">
+      Angular components and modules
+    </Card>
+    <Card title="Svelte" icon="s" href="/integrations/svelte">
+      Svelte components and actions
+    </Card>
+    <Card title="JavaScript" icon="js" href="/integrations/javascript">
+      Vanilla JavaScript with no framework
+    </Card>
+  </CardGroup>
+</div>
+
+<div className="mt-20 mb-16 max-w-5xl mx-auto px-6">
+  <div className="rounded-2xl bg-gradient-to-br from-[#040404] to-[#1a1a1a] dark:from-[#040404] dark:to-[#1a1a1a] p-8 sm:p-12 text-center border border-white/10">
+    <h2 className="text-3xl font-bold text-white">Ready to get started?</h2>
+    <p className="mt-4 text-lg text-gray-300 max-w-2xl mx-auto">
+      Follow our quickstart guide and add file uploads to your application in minutes.
+    </p>
+    <div className="mt-8">
+      <a
+        href="/quickstart"
+        className="inline-flex items-center justify-center px-8 py-3 text-base font-semibold text-[#040404] bg-[#fbd338] rounded-lg hover:bg-[#fbe483] transition-colors shadow-lg"
+      >
+        Start building
+        <svg className="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+        </svg>
+      </a>
+    </div>
+  </div>
+</div>

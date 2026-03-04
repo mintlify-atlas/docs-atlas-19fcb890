@@ -1,0 +1,544 @@
+---
+title: File Validation System
+description: Comprehensive guide to validating files with built-in and custom validators
+---
+
+The File Uploader provides a powerful validation system that allows you to validate files both individually and as collections. The validation system supports synchronous and asynchronous validators with configurable timing and concurrency.
+
+## Built-in Validators
+
+The library includes several built-in validators that run automatically based on your configuration:
+
+### Image Type Validation
+
+Validates that uploaded files are images when `imgOnly` is enabled.
+
+```typescript
+// Source: src/utils/validators/file/validateIsImage.ts
+export const validateIsImage: FuncFileValidator = (outputEntry, api) => {
+  const imagesOnly = api.cfg.imgOnly;
+  const isImage = outputEntry.isImage;
+
+  if (!imagesOnly || isImage) {
+    return;
+  }
+  
+  return {
+    type: 'NOT_AN_IMAGE',
+    message: api.l10n('images-only-accepted'),
+    payload: { entry: outputEntry },
+  };
+};
+```
+
+**Configuration:**
+
+```html
+<uc-config img-only="true"></uc-config>
+```
+
+### File Type Validation
+
+Validates file types against the `accept` attribute, supporting both MIME types and file extensions.
+
+```typescript
+// Source: src/utils/validators/file/validateFileType.ts
+const allowedFileTypes = mergeFileTypes([...(imagesOnly ? IMAGE_ACCEPT_LIST : []), accept]);
+if (!allowedFileTypes.length) return;
+
+const mimeOk = matchMimeType(mimeType, allowedFileTypes);
+const extOk = matchExtension(fileName, allowedFileTypes);
+
+if (!mimeOk && !extOk) {
+  return {
+    type: 'FORBIDDEN_FILE_TYPE',
+    message: api.l10n('file-type-not-allowed'),
+    payload: { entry: outputEntry },
+  };
+}
+```
+
+**Configuration:**
+
+```html
+<uc-config accept="image/png,image/jpeg,.pdf"></uc-config>
+```
+
+### File Size Validation
+
+Validates that files don't exceed the maximum size limit.
+
+```typescript
+// Source: src/utils/validators/file/validateMaxSizeLimit.ts
+export const validateMaxSizeLimit: FuncFileValidator = (outputEntry, api) => {
+  const maxFileSize = api.cfg.maxLocalFileSizeBytes;
+  const fileSize = outputEntry.size;
+  
+  if (maxFileSize && fileSize && fileSize > maxFileSize) {
+    return {
+      type: 'FILE_SIZE_EXCEEDED',
+      message: api.l10n('files-max-size-limit-error', { 
+        maxFileSize: prettyBytes(maxFileSize) 
+      }),
+      payload: { entry: outputEntry },
+    };
+  }
+};
+```
+
+**Configuration:**
+
+```html
+<!-- 5MB limit -->
+<uc-config max-local-file-size-bytes="5242880"></uc-config>
+```
+
+### Collection Validators
+
+Validate the entire file collection for count limits.
+
+```typescript
+// Source: src/utils/validators/collection/validateMultiple.ts
+export const validateMultiple: FuncCollectionValidator = (collection, api) => {
+  const total = collection.totalCount;
+  const multipleMin = api.cfg.multiple ? api.cfg.multipleMin : 0;
+  const multipleMax = api.cfg.multiple ? api.cfg.multipleMax : 1;
+
+  if (multipleMin && total < multipleMin) {
+    return {
+      type: 'TOO_FEW_FILES',
+      message: api.l10n('files-count-limit-error-too-few', {
+        min: multipleMin,
+        max: multipleMax,
+        total,
+      }),
+      payload: { total, min: multipleMin, max: multipleMax },
+    };
+  }
+
+  if (multipleMax && total > multipleMax) {
+    return {
+      type: 'TOO_MANY_FILES',
+      message: api.l10n('files-count-limit-error-too-many', {
+        min: multipleMin,
+        max: multipleMax,
+        total,
+      }),
+      payload: { total, min: multipleMin, max: multipleMax },
+    };
+  }
+};
+```
+
+**Configuration:**
+
+```html
+<uc-config 
+  multiple="true" 
+  multiple-min="2" 
+  multiple-max="10">
+</uc-config>
+```
+
+## Custom Validators
+
+### File Validators
+
+Create custom validators to implement your own validation logic.
+
+#### Basic File Validator
+
+```typescript
+import type { FuncFileValidator } from '@uploadcare/file-uploader';
+
+const customValidator: FuncFileValidator = (outputEntry, api) => {
+  // Validate file name pattern
+  if (!outputEntry.name.match(/^[a-zA-Z0-9-_]+\./)) {
+    return {
+      message: 'File name must contain only alphanumeric characters',
+    };
+  }
+  
+  // No error - file is valid
+  return undefined;
+};
+```
+
+```html
+<uc-config id="my-config" pubkey="YOUR_PUBLIC_KEY"></uc-config>
+
+<script>
+  const config = document.getElementById('my-config');
+  config.fileValidators = [customValidator];
+</script>
+```
+
+#### Async File Validator
+
+```typescript
+const asyncValidator: FuncFileValidator = async (outputEntry, api, options) => {
+  // Access abort signal for cancellation
+  const { signal } = options || {};
+  
+  try {
+    // Perform async validation (e.g., check with external API)
+    const response = await fetch('/api/validate-file', {
+      method: 'POST',
+      body: JSON.stringify({ 
+        name: outputEntry.name,
+        size: outputEntry.size 
+      }),
+      signal,
+    });
+    
+    const result = await response.json();
+    
+    if (!result.valid) {
+      return {
+        message: result.error || 'File validation failed',
+      };
+    }
+  } catch (error) {
+    if (error.name === 'AbortError') {
+      // Validation was cancelled
+      return;
+    }
+    // Handle other errors
+    console.error('Validation error:', error);
+  }
+};
+```
+
+### Validator Descriptors
+
+Control when validators run with descriptor objects.
+
+```typescript
+import type { FileValidatorDescriptor } from '@uploadcare/file-uploader';
+
+const validators: FileValidatorDescriptor[] = [
+  {
+    runOn: 'add',
+    validator: (outputEntry, api) => {
+      // Runs once when file is added
+      console.log('Validating on add:', outputEntry.name);
+    },
+  },
+  {
+    runOn: 'upload',
+    validator: (outputEntry, api) => {
+      // Runs once when upload starts
+      console.log('Validating on upload:', outputEntry.name);
+    },
+  },
+  {
+    runOn: 'change',
+    validator: (outputEntry, api) => {
+      // Runs on every file change (status, URL, etc.)
+      console.log('Validating on change:', outputEntry.status);
+    },
+  },
+];
+
+config.fileValidators = validators;
+```
+
+**Validator Timing:**
+
+| Run On | When It Executes | Use Case |
+|--------|------------------|----------|
+| `add` | Once when file is added | Quick client-side checks (name, extension) |
+| `upload` | Once when upload starts | Pre-upload validation after file info is available |
+| `change` | On every state change | Continuous validation during and after upload |
+
+<Note>
+If you pass a function directly (not a descriptor), it defaults to `runOn: 'change'`.
+</Note>
+
+### Collection Validators
+
+Validate the entire collection of files.
+
+```typescript
+import type { FuncCollectionValidator } from '@uploadcare/file-uploader';
+
+const collectionValidator: FuncCollectionValidator = (collection, api) => {
+  // Check total file size
+  const totalSize = collection.successEntries.reduce(
+    (sum, entry) => sum + entry.size, 
+    0
+  );
+  
+  const maxTotalSize = 50 * 1024 * 1024; // 50MB
+  
+  if (totalSize > maxTotalSize) {
+    return {
+      message: `Total file size exceeds ${maxTotalSize / 1024 / 1024}MB`,
+    };
+  }
+  
+  // Ensure at least one image
+  const hasImage = collection.allEntries.some(entry => entry.isImage);
+  if (!hasImage) {
+    return {
+      message: 'At least one image file is required',
+    };
+  }
+};
+
+config.collectionValidators = [collectionValidator];
+```
+
+## Validation Configuration
+
+### Timeout Settings
+
+```html
+<!-- Set validation timeout to 5 seconds -->
+<uc-config validation-timeout="5000"></uc-config>
+```
+
+```typescript
+// Source: src/abstract/managers/ValidationManager.ts:212-216
+const timeoutId = setTimeout(() => {
+  state.skippedValidators.add(validatorDescriptor.validator);
+  abortController.abort();
+  console.warn(LOG_TEXT.FILE_VALIDATION_TIMEOUT);
+}, timeoutMs);
+```
+
+### Concurrency Control
+
+```html
+<!-- Validate up to 5 files concurrently -->
+<uc-config validation-concurrency="5"></uc-config>
+```
+
+```typescript
+// Source: src/abstract/managers/ValidationManager.ts:107-110
+this._ctx.sub(sharedConfigKey('validationConcurrency'), (concurrency) => {
+  this._queue.concurrency = concurrency;
+});
+```
+
+## Error Handling
+
+### Error Types
+
+All validation errors have a consistent structure:
+
+```typescript
+// Source: src/types/exported.ts:358-372
+export type OutputFileErrorType =
+  | 'CUSTOM_ERROR'
+  | 'NOT_AN_IMAGE'
+  | 'FORBIDDEN_FILE_TYPE'
+  | 'FILE_SIZE_EXCEEDED'
+  | 'UPLOAD_ERROR'
+  | 'NETWORK_ERROR'
+  | 'UNKNOWN_ERROR';
+
+export type OutputCollectionErrorType =
+  | 'CUSTOM_ERROR'
+  | 'SOME_FILES_HAS_ERRORS'
+  | 'TOO_MANY_FILES'
+  | 'TOO_FEW_FILES';
+```
+
+### Accessing Errors
+
+```typescript
+const api = ctxProvider.getAPI();
+const entry = api.addFileFromObject(file);
+
+// Access file-level errors
+const fileEntry = api.getOutputItem(entry.internalId);
+console.log('File errors:', fileEntry.errors);
+// Example: [{ type: 'FILE_SIZE_EXCEEDED', message: '...', payload: {...} }]
+
+// Access collection-level errors
+const collection = api.getOutputCollectionState();
+console.log('Collection errors:', collection.errors);
+// Example: [{ type: 'TOO_MANY_FILES', message: '...', payload: {...} }]
+```
+
+### Custom Error Types
+
+```typescript
+const validator: FuncFileValidator = (outputEntry) => {
+  if (outputEntry.name.includes('test')) {
+    return {
+      type: 'CUSTOM_ERROR',
+      message: 'Test files are not allowed',
+      payload: {
+        customField: 'Additional error data',
+      },
+    };
+  }
+};
+```
+
+<Warning>
+If your validator doesn't specify a `type`, it will automatically be set to `'CUSTOM_ERROR'`.
+</Warning>
+
+## Validation States
+
+Files expose validation state through their properties:
+
+```typescript
+interface OutputFileEntry {
+  isValidationPending: boolean; // True while validation is running
+  errors: OutputErrorFile[]; // Array of validation errors
+  status: 'idle' | 'uploading' | 'success' | 'failed' | 'removed';
+}
+```
+
+```typescript
+// Monitor validation state
+const entry = api.getOutputItem(internalId);
+
+if (entry.isValidationPending) {
+  console.log('Validation in progress...');
+}
+
+if (entry.isFailed) {
+  console.log('File failed validation:', entry.errors);
+}
+```
+
+## Best Practices
+
+<Tabs>
+  <Tab title="Performance">
+    - Use `runOn: 'add'` for quick, synchronous checks
+    - Use `runOn: 'upload'` for slower validations that need file data
+    - Keep `runOn: 'change'` validators lightweight
+    - Set appropriate validation timeout to prevent blocking
+    - Use validation concurrency to control resource usage
+  </Tab>
+  
+  <Tab title="User Experience">
+    - Provide clear, actionable error messages
+    - Use localized messages via `api.l10n()`
+    - Return early for valid files to improve performance
+    - Handle abort signals to support file removal during validation
+  </Tab>
+  
+  <Tab title="Error Handling">
+    - Always return `undefined` for valid files
+    - Include helpful error messages
+    - Use typed error payloads for debugging
+    - Catch and handle async validation errors gracefully
+  </Tab>
+</Tabs>
+
+## Complete Example
+
+```html
+<!DOCTYPE html>
+<html>
+<head>
+  <script type="module">
+    import * as UC from 'https://cdn.jsdelivr.net/npm/@uploadcare/file-uploader@latest/web/file-uploader.min.js';
+    UC.defineComponents(UC);
+    
+    // Custom validators
+    const fileNameValidator = (entry) => {
+      if (entry.name.length > 100) {
+        return { message: 'File name too long (max 100 characters)' };
+      }
+    };
+    
+    const asyncImageValidator = async (entry, api, { signal }) => {
+      if (!entry.isImage) return;
+      
+      try {
+        const response = await fetch(entry.cdnUrl, { signal });
+        const blob = await response.blob();
+        const img = await createImageBitmap(blob);
+        
+        if (img.width < 800 || img.height < 600) {
+          return {
+            message: 'Image must be at least 800x600 pixels',
+          };
+        }
+      } catch (err) {
+        if (err.name !== 'AbortError') {
+          console.error('Image validation failed:', err);
+        }
+      }
+    };
+    
+    const collectionValidator = (collection) => {
+      const imageCount = collection.allEntries.filter(e => e.isImage).length;
+      if (imageCount === 0) {
+        return { message: 'At least one image is required' };
+      }
+    };
+    
+    // Apply validators
+    window.addEventListener('DOMContentLoaded', () => {
+      const config = document.getElementById('config');
+      
+      config.fileValidators = [
+        { runOn: 'add', validator: fileNameValidator },
+        { runOn: 'upload', validator: asyncImageValidator },
+      ];
+      
+      config.collectionValidators = [collectionValidator];
+    });
+  </script>
+</head>
+<body>
+  <uc-file-uploader-regular ctx-name="uploader"></uc-file-uploader-regular>
+  <uc-config 
+    id="config"
+    ctx-name="uploader"
+    pubkey="YOUR_PUBLIC_KEY"
+    multiple="true"
+    multiple-min="1"
+    multiple-max="10"
+    max-local-file-size-bytes="10485760"
+    validation-timeout="10000"
+    validation-concurrency="3"
+    accept="image/*"
+  ></uc-config>
+  <uc-upload-ctx-provider ctx-name="uploader"></uc-upload-ctx-provider>
+</body>
+</html>
+```
+
+## API Reference
+
+### Types
+
+```typescript
+// Source: src/types/exported.ts
+export type FuncFileValidator = (
+  outputEntry: OutputFileEntry,
+  api: UploaderPublicApi,
+  options?: { signal?: AbortSignal },
+) => undefined | OutputErrorFile | Promise<undefined | OutputErrorFile>;
+
+export type FileValidatorDescriptor = {
+  runOn: 'add' | 'upload' | 'change';
+  validator: FuncFileValidator;
+};
+
+export type FileValidator = FileValidatorDescriptor | FuncFileValidator;
+
+export type FuncCollectionValidator = (
+  collection: OutputCollectionState,
+  api: UploaderPublicApi,
+) => undefined | OutputErrorCollection;
+```
+
+### Configuration Properties
+
+| Property | Type | Default | Description |
+|----------|------|---------|-------------|
+| `fileValidators` | `FileValidator[]` | `[]` | Array of file validators |
+| `collectionValidators` | `FuncCollectionValidator[]` | `[]` | Array of collection validators |
+| `validationTimeout` | `number` | (default) | Timeout for async validators in milliseconds |
+| `validationConcurrency` | `number` | `20` | Number of files to validate concurrently |

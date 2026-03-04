@@ -1,0 +1,418 @@
+---
+title: "React Integration"
+description: "Learn how to integrate Uploadcare File Uploader in React applications"
+---
+
+## Overview
+
+Uploadcare File Uploader is built with Web Components, making it compatible with React applications. This guide shows you how to integrate the uploader into your React projects using TypeScript.
+
+## Installation
+
+Install the File Uploader package from npm:
+
+```bash
+npm install @uploadcare/file-uploader
+```
+
+## Basic Setup
+
+### Step 1: Import and Define Components
+
+Create a component to initialize the File Uploader:
+
+```tsx App.tsx
+import { useEffect, useRef } from 'react';
+import * as UC from '@uploadcare/file-uploader';
+import '@uploadcare/file-uploader/index.css';
+
+function App() {
+  const initialized = useRef(false);
+
+  useEffect(() => {
+    if (!initialized.current) {
+      UC.defineComponents(UC);
+      initialized.current = true;
+    }
+  }, []);
+
+  return (
+    <div>
+      <uc-config
+        ctx-name="my-uploader"
+        pubkey="YOUR_PUBLIC_KEY"
+      />
+      <uc-file-uploader-regular
+        ctx-name="my-uploader"
+      />
+    </div>
+  );
+}
+
+export default App;
+```
+
+<Note>
+Replace `YOUR_PUBLIC_KEY` with your actual Uploadcare public key from your [dashboard](https://app.uploadcare.com/projects/-/api-keys/).
+</Note>
+
+### Step 2: TypeScript Support
+
+To enable TypeScript support and JSX types for the Web Components, add the following to your component file or a types declaration file:
+
+```tsx types.d.ts
+/// <reference types="@uploadcare/file-uploader/types/jsx" />
+```
+
+Alternatively, add it to your `tsconfig.json`:
+
+```json tsconfig.json
+{
+  "compilerOptions": {
+    "types": ["@uploadcare/file-uploader/types/jsx"]
+  }
+}
+```
+
+## Available Solutions
+
+The File Uploader provides three pre-built solutions:
+
+<Tabs>
+  <Tab title="Regular">
+    Full-featured uploader with modal dialog:
+
+    ```tsx
+    <uc-file-uploader-regular ctx-name="my-uploader" />
+    ```
+
+    Best for:
+    - Standard file upload workflows
+    - Apps needing a modal interface
+    - Multiple file uploads with preview
+  </Tab>
+  <Tab title="Inline">
+    Inline uploader embedded in your page:
+
+    ```tsx
+    <uc-file-uploader-inline ctx-name="my-uploader" />
+    ```
+
+    Best for:
+    - Forms and embedded uploads
+    - Compact UI requirements
+    - Custom page layouts
+  </Tab>
+  <Tab title="Minimal">
+    Minimalist uploader with basic controls:
+
+    ```tsx
+    <uc-file-uploader-minimal ctx-name="my-uploader" />
+    ```
+
+    Best for:
+    - Simple upload scenarios
+    - Minimal UI footprint
+    - Quick implementations
+  </Tab>
+</Tabs>
+
+## Configuration
+
+All configuration is managed through the `uc-config` component. Here are common options:
+
+```tsx
+<uc-config
+  ctx-name="my-uploader"
+  pubkey="YOUR_PUBLIC_KEY"
+  multiple={true}
+  img-only={false}
+  source-list="local, url, camera, dropbox, gdrive"
+  max-local-file-size-bytes={52428800}
+/>
+```
+
+### Key Configuration Props
+
+| Prop | Type | Description |
+|------|------|-------------|
+| `ctx-name` | string | Context name to link uploader and config |
+| `pubkey` | string | Your Uploadcare public key |
+| `multiple` | boolean | Allow multiple file selection |
+| `img-only` | boolean | Restrict uploads to images only |
+| `source-list` | string | Comma-separated list of upload sources |
+| `max-local-file-size-bytes` | number | Maximum file size in bytes |
+
+<Note>
+For a complete list of configuration options, see the [Configuration Reference](/api/configuration-options).
+</Note>
+
+## Handling Upload Events
+
+Listen to upload events using refs and event listeners:
+
+```tsx FileUploadComponent.tsx
+import { useEffect, useRef } from 'react';
+import * as UC from '@uploadcare/file-uploader';
+import '@uploadcare/file-uploader/index.css';
+
+function FileUploadComponent() {
+  const uploaderRef = useRef<any>(null);
+  const ctxProviderRef = useRef<any>(null);
+
+  useEffect(() => {
+    UC.defineComponents(UC);
+
+    const ctxProvider = ctxProviderRef.current;
+    if (!ctxProvider) return;
+
+    // Handle file upload success
+    const handleUploadSuccess = (e: CustomEvent) => {
+      console.log('File uploaded:', e.detail);
+      const { uuid, cdnUrl, name } = e.detail;
+      // Save file info to your state or database
+    };
+
+    // Handle file added to upload list
+    const handleFileAdded = (e: CustomEvent) => {
+      console.log('File added:', e.detail);
+    };
+
+    // Handle errors
+    const handleError = (e: CustomEvent) => {
+      console.error('Upload error:', e.detail);
+    };
+
+    ctxProvider.addEventListener('file-upload-success', handleUploadSuccess);
+    ctxProvider.addEventListener('file-added', handleFileAdded);
+    ctxProvider.addEventListener('upload-error', handleError);
+
+    return () => {
+      ctxProvider.removeEventListener('file-upload-success', handleUploadSuccess);
+      ctxProvider.removeEventListener('file-added', handleFileAdded);
+      ctxProvider.removeEventListener('upload-error', handleError);
+    };
+  }, []);
+
+  return (
+    <div>
+      <uc-config
+        ctx-name="my-uploader"
+        pubkey="YOUR_PUBLIC_KEY"
+      />
+      <uc-file-uploader-regular
+        ref={uploaderRef}
+        ctx-name="my-uploader"
+      />
+      <uc-upload-ctx-provider
+        ref={ctxProviderRef}
+        ctx-name="my-uploader"
+      />
+    </div>
+  );
+}
+
+export default FileUploadComponent;
+```
+
+## Form Integration
+
+Integrate the uploader with React forms:
+
+```tsx FormWithUpload.tsx
+import { useEffect, useRef, useState } from 'react';
+import * as UC from '@uploadcare/file-uploader';
+import '@uploadcare/file-uploader/index.css';
+
+function FormWithUpload() {
+  const [uploadedFiles, setUploadedFiles] = useState<string[]>([]);
+  const ctxProviderRef = useRef<any>(null);
+
+  useEffect(() => {
+    UC.defineComponents(UC);
+
+    const ctxProvider = ctxProviderRef.current;
+    if (!ctxProvider) return;
+
+    const handleUploadSuccess = (e: CustomEvent) => {
+      setUploadedFiles(prev => [...prev, e.detail.uuid]);
+    };
+
+    ctxProvider.addEventListener('file-upload-success', handleUploadSuccess);
+
+    return () => {
+      ctxProvider.removeEventListener('file-upload-success', handleUploadSuccess);
+    };
+  }, []);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    console.log('Submitted with files:', uploadedFiles);
+    // Send uploadedFiles to your API
+  };
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <uc-config
+        ctx-name="my-uploader"
+        pubkey="YOUR_PUBLIC_KEY"
+        multiple={true}
+      />
+      <uc-file-uploader-regular ctx-name="my-uploader">
+        <uc-form-input ctx-name="my-uploader" name="files" />
+      </uc-file-uploader-regular>
+      <uc-upload-ctx-provider
+        ref={ctxProviderRef}
+        ctx-name="my-uploader"
+      />
+      <button type="submit">Submit</button>
+    </form>
+  );
+}
+
+export default FormWithUpload;
+```
+
+## Custom Styling
+
+Customize the uploader appearance using CSS variables:
+
+```css App.css
+uc-file-uploader-regular {
+  --uc-primary-color: #007bff;
+  --uc-secondary-color: #6c757d;
+  --uc-border-radius: 8px;
+}
+```
+
+## Reusable Hook
+
+Create a custom hook for cleaner integration:
+
+```tsx useFileUploader.ts
+import { useEffect, useRef } from 'react';
+import * as UC from '@uploadcare/file-uploader';
+import '@uploadcare/file-uploader/index.css';
+
+interface UploadEvents {
+  onUploadSuccess?: (detail: any) => void;
+  onFileAdded?: (detail: any) => void;
+  onError?: (detail: any) => void;
+}
+
+export function useFileUploader(events: UploadEvents = {}) {
+  const ctxProviderRef = useRef<any>(null);
+  const initialized = useRef(false);
+
+  useEffect(() => {
+    if (!initialized.current) {
+      UC.defineComponents(UC);
+      initialized.current = true;
+    }
+  }, []);
+
+  useEffect(() => {
+    const ctxProvider = ctxProviderRef.current;
+    if (!ctxProvider) return;
+
+    const handleUploadSuccess = (e: CustomEvent) => {
+      events.onUploadSuccess?.(e.detail);
+    };
+
+    const handleFileAdded = (e: CustomEvent) => {
+      events.onFileAdded?.(e.detail);
+    };
+
+    const handleError = (e: CustomEvent) => {
+      events.onError?.(e.detail);
+    };
+
+    ctxProvider.addEventListener('file-upload-success', handleUploadSuccess);
+    ctxProvider.addEventListener('file-added', handleFileAdded);
+    ctxProvider.addEventListener('upload-error', handleError);
+
+    return () => {
+      ctxProvider.removeEventListener('file-upload-success', handleUploadSuccess);
+      ctxProvider.removeEventListener('file-added', handleFileAdded);
+      ctxProvider.removeEventListener('upload-error', handleError);
+    };
+  }, [events]);
+
+  return { ctxProviderRef };
+}
+```
+
+Use the hook in your components:
+
+```tsx
+function App() {
+  const { ctxProviderRef } = useFileUploader({
+    onUploadSuccess: (detail) => console.log('Uploaded:', detail),
+    onError: (detail) => console.error('Error:', detail),
+  });
+
+  return (
+    <div>
+      <uc-config ctx-name="my-uploader" pubkey="YOUR_PUBLIC_KEY" />
+      <uc-file-uploader-regular ctx-name="my-uploader" />
+      <uc-upload-ctx-provider ref={ctxProviderRef} ctx-name="my-uploader" />
+    </div>
+  );
+}
+```
+
+## Best Practices
+
+<Steps>
+  <Step title="Initialize once">
+    Call `defineComponents()` only once during the app lifecycle, typically in a `useEffect` with empty dependencies or at the root level.
+  </Step>
+  <Step title="Use unique context names">
+    If you have multiple uploaders on the same page, use different `ctx-name` values for each.
+  </Step>
+  <Step title="Clean up event listeners">
+    Always remove event listeners in the cleanup function of `useEffect` to prevent memory leaks.
+  </Step>
+  <Step title="Handle errors gracefully">
+    Implement error handlers to provide feedback to users when uploads fail.
+  </Step>
+</Steps>
+
+## Troubleshooting
+
+### TypeScript errors with JSX
+
+If you see TypeScript errors about unknown elements, ensure you've added the JSX types reference:
+
+```tsx
+/// <reference types="@uploadcare/file-uploader/types/jsx" />
+```
+
+### Components not rendering
+
+Make sure you've called `defineComponents(UC)` before rendering the components in the DOM.
+
+### CSS not loading
+
+Ensure you've imported the CSS file:
+
+```tsx
+import '@uploadcare/file-uploader/index.css';
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Configuration" icon="gear" href="/api/configuration-options">
+    Explore all configuration options
+  </Card>
+  <Card title="Events API" icon="bolt" href="/api/types/events">
+    Learn about available events
+  </Card>
+  <Card title="Live Examples" icon="code" href="https://github.com/uploadcare/file-uploader-examples/tree/main/examples/react-uploader">
+    View complete React examples
+  </Card>
+  <Card title="Next.js Integration" icon="arrow-right" href="/integrations/nextjs">
+    Learn about Next.js-specific considerations
+  </Card>
+</CardGroup>

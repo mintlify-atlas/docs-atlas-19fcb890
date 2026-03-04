@@ -1,0 +1,964 @@
+---
+title: "Configuration Options"
+description: "Complete reference for all File Uploader configuration options"
+---
+
+The File Uploader can be configured using various options that control upload behavior, validation, UI appearance, and more. This page provides a complete reference for all available configuration options.
+
+## Basic Configuration
+
+<ParamField path="pubkey" type="string" required>
+  Your project's Public Key. This is required to use the File Uploader.
+  
+  **Default:** `''`
+</ParamField>
+
+<ParamField path="multiple" type="boolean">
+  Allow multiple file uploads.
+  
+  **Default:** `true`
+  
+  ```html
+  <uc-config pubkey="YOUR_PUBLIC_KEY" multiple="true"></uc-config>
+  ```
+</ParamField>
+
+<ParamField path="multipleMin" type="number">
+  Minimum number of files to upload.
+  
+  **Default:** `0`
+</ParamField>
+
+<ParamField path="multipleMax" type="number">
+  Maximum number of files to upload.
+  
+  **Default:** `Number.MAX_SAFE_INTEGER`
+  
+  ```html
+  <uc-config pubkey="YOUR_PUBLIC_KEY" multiple-max="10"></uc-config>
+  ```
+</ParamField>
+
+<ParamField path="confirmUpload" type="boolean">
+  Require user confirmation before uploading.
+  
+  **Default:** `false`
+</ParamField>
+
+<ParamField path="groupOutput" type="boolean">
+  Group output files. When enabled, multiple files will be combined into a single group.
+  
+  **Default:** `false`
+</ParamField>
+
+## File Validation
+
+<ParamField path="imgOnly" type="boolean">
+  Allow only image files.
+  
+  **Default:** `false`
+  
+  ```html
+  <uc-config pubkey="YOUR_PUBLIC_KEY" img-only="true"></uc-config>
+  ```
+</ParamField>
+
+<ParamField path="accept" type="string">
+  Native file input accept attribute value. Also affects client validation settings.
+  
+  **Default:** `''`
+  
+  ```html
+  <uc-config accept="image/*,.pdf"></uc-config>
+  ```
+</ParamField>
+
+<ParamField path="maxLocalFileSizeBytes" type="number">
+  Maximum size of local files in bytes. Set to `0` for no limit.
+  
+  **Default:** `0`
+  
+  ```html
+  <uc-config max-local-file-size-bytes="10485760"></uc-config>
+  ```
+</ParamField>
+
+<ParamField path="fileValidators" type="FileValidators">
+  Validators for individual files. This is an array of file validator functions.
+  
+  **Default:** `[]`
+  
+  <Note>
+  This is a complex type that must be set via JavaScript, not as an HTML attribute.
+  </Note>
+  
+  ```javascript
+  const config = document.querySelector('uc-config');
+  config.fileValidators = [
+    (file) => {
+      if (file.size > 1000000) {
+        return { message: 'File is too large' };
+      }
+    }
+  ];
+  ```
+</ParamField>
+
+<ParamField path="collectionValidators" type="CollectionValidators">
+  Validators for file collections. This is an array of collection validator functions.
+  
+  **Default:** `[]`
+  
+  <Note>
+  This is a complex type that must be set via JavaScript, not as an HTML attribute.
+  </Note>
+</ParamField>
+
+<ParamField path="validationTimeout" type="number">
+  Timeout for async validation functions, in milliseconds.
+  
+  **Default:** `15000` (15 seconds)
+</ParamField>
+
+<ParamField path="validationConcurrency" type="number">
+  The number of files to validate concurrently.
+  
+  **Default:** `100`
+</ParamField>
+
+## Upload Sources
+
+<ParamField path="sourceList" type="string">
+  List of sources for file uploads. Comma-separated list of source names.
+  
+  **Default:** `'local, url, camera, dropbox, gdrive'`
+  
+  **Available sources:**
+  - `local` - Local file system
+  - `url` - URL import
+  - `camera` - Camera capture
+  - `dropbox` - Dropbox
+  - `gdrive` - Google Drive
+  - `gphotos` - Google Photos
+  - `instagram` - Instagram
+  - `facebook` - Facebook
+  - `flickr` - Flickr
+  - `vk` - VK
+  - `evernote` - Evernote
+  - `box` - Box
+  - `onedrive` - OneDrive
+  - `huddle` - Huddle
+  
+  ```html
+  <uc-config source-list="local, url, camera"></uc-config>
+  ```
+</ParamField>
+
+<ParamField path="sourceListWrap" type="boolean">
+  Wrap the source list when it overflows.
+  
+  **Default:** `true`
+</ParamField>
+
+<ParamField path="externalSourcesPreferredTypes" type="string">
+  Preferred types for external sources. This affects which file types are displayed first in external source pickers.
+  
+  **Default:** `''`
+  
+  See [External Sources Preferred Types](https://uploadcare.com/docs/file-uploader/options/#external-sources-preferred-types) for more details.
+</ParamField>
+
+<ParamField path="externalSourcesEmbedCss" type="string">
+  Provide custom CSS to the social sources iframe.
+  
+  **Default:** `''`
+</ParamField>
+
+<ParamField path="remoteTabSessionKey" type="string">
+  Key to revoke Custom OAuth access. See [OAuth docs](https://uploadcare.com/docs/upload-sources/#oauth) for details.
+  
+  **Default:** `''`
+</ParamField>
+
+<ParamField path="topLevelOrigin" type="string">
+  Top-level origin for the uploader. This is used for Google Drive Picker if there is no access to the origin due to the cross-origin policy.
+  
+  **Default:** `''`
+</ParamField>
+
+## Camera Configuration
+
+<ParamField path="cameraCapture" type="'user' | 'environment' | ''">
+  Default camera capture mode. Determines which camera is used by default.
+  
+  **Default:** `''`
+  
+  - `'user'` - Front-facing camera
+  - `'environment'` - Back-facing camera
+  - `''` - Browser default
+</ParamField>
+
+<ParamField path="cameraMirror" type="boolean">
+  Mirror the camera view horizontally.
+  
+  **Default:** `false`
+</ParamField>
+
+<ParamField path="cameraModes" type="string">
+  The camera modes to enable in the camera modal. It is possible to select photo or video capture. The first mode is the default mode.
+  
+  **Default:** `'photo, video'`
+  
+  ```html
+  <uc-config camera-modes="photo"></uc-config>
+  ```
+</ParamField>
+
+<ParamField path="defaultCameraMode" type="'photo' | 'video' | null">
+  The default tab to open in the camera modal.
+  
+  **Default:** `null`
+  
+  <Warning>
+  **Deprecated:** Use `cameraModes` instead.
+  </Warning>
+</ParamField>
+
+<ParamField path="enableAudioRecording" type="boolean">
+  Enable audio recording in the camera modal.
+  
+  **Default:** `true`
+</ParamField>
+
+<ParamField path="enableVideoRecording" type="boolean | null">
+  Enable video recording.
+  
+  **Default:** `null`
+  
+  <Warning>
+  **Deprecated:** Use `cameraModes` instead.
+  </Warning>
+</ParamField>
+
+<ParamField path="maxVideoRecordingDuration" type="number | null">
+  The maximum duration of the video recording in seconds. Set to `null` for no limit.
+  
+  **Default:** `null`
+</ParamField>
+
+<ParamField path="mediaRecorderOptions" type="MediaRecorderOptions | null">
+  A dictionary object that can contain properties from MediaRecorderOptions.
+  
+  **Default:** `null`
+  
+  <Note>
+  This is a complex type that must be set via JavaScript, not as an HTML attribute.
+  </Note>
+  
+  ```javascript
+  const config = document.querySelector('uc-config');
+  config.mediaRecorderOptions = {
+    mimeType: 'video/webm;codecs=vp9',
+    videoBitsPerSecond: 2500000
+  };
+  ```
+</ParamField>
+
+## Storage & CDN
+
+<ParamField path="store" type="boolean | 'auto'">
+  Store uploaded files permanently.
+  
+  **Default:** `'auto'`
+  
+  - `true` - Files are stored permanently
+  - `false` - Files are stored temporarily (24 hours)
+  - `'auto'` - Uses your project's default storage setting
+</ParamField>
+
+<ParamField path="cdnCname" type="string">
+  Set custom CNAME for CDN URLs.
+  
+  **Default:** `'https://ucarecdn.com'`
+</ParamField>
+
+<ParamField path="cdnCnamePrefixed" type="string">
+  Set CNAME base domain for prefixed CDN URLs.
+  
+  **Default:** `'https://ucarecd.net'`
+</ParamField>
+
+## Upload Configuration
+
+<ParamField path="baseUrl" type="string">
+  Set a custom upload URL.
+  
+  **Default:** `'https://upload.uploadcare.com'`
+</ParamField>
+
+<ParamField path="socialBaseUrl" type="string">
+  Set a custom social sources URL.
+  
+  **Default:** `'https://social.uploadcare.com'`
+</ParamField>
+
+<ParamField path="maxConcurrentRequests" type="number">
+  Maximum number of concurrent upload requests.
+  
+  **Default:** `10`
+</ParamField>
+
+<ParamField path="retryThrottledRequestMaxTimes" type="number">
+  Maximum number of retry attempts for throttled requests.
+  
+  **Default:** `3`
+</ParamField>
+
+<ParamField path="retryNetworkErrorMaxTimes" type="number">
+  Maximum number of retry attempts for network errors.
+  
+  **Default:** `3`
+</ParamField>
+
+<ParamField path="checkForUrlDuplicates" type="boolean">
+  Check for URL duplicates before uploading.
+  
+  **Default:** `false`
+</ParamField>
+
+<ParamField path="saveUrlForRecurrentUploads" type="boolean">
+  Save URL for recurrent uploads to avoid re-uploading the same file.
+  
+  **Default:** `false`
+</ParamField>
+
+## Multipart Uploads
+
+<ParamField path="multipartMinFileSize" type="number">
+  Minimum file size in bytes for multipart uploads. Files larger than this will be uploaded in chunks.
+  
+  **Default:** `26214400` (25 MB)
+</ParamField>
+
+<ParamField path="multipartChunkSize" type="number">
+  Chunk size for multipart uploads in bytes.
+  
+  **Default:** `5242880` (5 MB)
+</ParamField>
+
+<ParamField path="multipartMaxConcurrentRequests" type="number">
+  Maximum number of concurrent requests for multipart uploads.
+  
+  **Default:** `4`
+</ParamField>
+
+<ParamField path="multipartMaxAttempts" type="number">
+  Maximum number of attempts for multipart upload chunks.
+  
+  **Default:** `3`
+</ParamField>
+
+## Security
+
+<ParamField path="secureSignature" type="string">
+  Secure signature for uploads. Used for signed uploads to prevent unauthorized file uploads.
+  
+  **Default:** `''`
+  
+  See [Signed Uploads](https://uploadcare.com/docs/security/secure-uploads/) for more details.
+</ParamField>
+
+<ParamField path="secureExpire" type="string">
+  Expiry time for secure uploads. Unix timestamp as a string.
+  
+  **Default:** `''`
+</ParamField>
+
+<ParamField path="secureUploadsExpireThreshold" type="number">
+  Expiry threshold for secure uploads in milliseconds. When the signature is about to expire within this threshold, the resolver will be called again.
+  
+  **Default:** `600000` (10 minutes)
+</ParamField>
+
+<ParamField path="secureUploadsSignatureResolver" type="SecureUploadsSignatureResolver | null">
+  Resolver function for secure uploads signature. Returns a promise that resolves to an object containing `secureSignature` and `secureExpire`.
+  
+  **Default:** `null`
+  
+  <Note>
+  This is a complex type that must be set via JavaScript, not as an HTML attribute.
+  </Note>
+  
+  ```javascript
+  const config = document.querySelector('uc-config');
+  config.secureUploadsSignatureResolver = async () => {
+    const response = await fetch('/get-uploadcare-signature');
+    const { signature, expire } = await response.json();
+    return {
+      secureSignature: signature,
+      secureExpire: expire
+    };
+  };
+  ```
+</ParamField>
+
+<ParamField path="secureDeliveryProxy" type="string">
+  Proxy URL for secure delivery.
+  
+  **Default:** `''`
+</ParamField>
+
+<ParamField path="secureDeliveryProxyUrlResolver" type="SecureDeliveryProxyUrlResolver | null">
+  Resolver function for secure delivery proxy URL.
+  
+  **Default:** `null`
+  
+  <Note>
+  This is a complex type that must be set via JavaScript, not as an HTML attribute.
+  </Note>
+  
+  ```javascript
+  const config = document.querySelector('uc-config');
+  config.secureDeliveryProxyUrlResolver = async (previewUrl, { uuid, cdnUrlModifiers, fileName }) => {
+    return `https://your-proxy.com/${uuid}/${cdnUrlModifiers}/${fileName}`;
+  };
+  ```
+</ParamField>
+
+## Image Processing
+
+<ParamField path="cropPreset" type="string">
+  Defines the crop behavior. When uploading images, your users can select a crop area with a defined aspect ratio.
+  
+  **Default:** `''`
+  
+  Examples: `'1:1'`, `'16:9'`, `'free'`
+</ParamField>
+
+<ParamField path="imageShrink" type="string">
+  Image shrink options. Automatically resize images before upload.
+  
+  **Default:** `''`
+  
+  Example: `'1024x1024'` to resize images larger than 1024x1024 pixels.
+</ParamField>
+
+<ParamField path="useLocalImageEditor" type="boolean">
+  Use local image editor for basic image editing operations.
+  
+  **Default:** `false`
+</ParamField>
+
+<ParamField path="useCloudImageEditor" type="boolean">
+  Enable cloud image editing with advanced features.
+  
+  **Default:** `true`
+</ParamField>
+
+<ParamField path="cloudImageEditorTabs" type="string">
+  Tabs to show in the cloud image editor. Comma-separated list.
+  
+  **Default:** `'crop, tuning, filters'`
+  
+  **Available tabs:**
+  - `crop` - Crop and rotate
+  - `tuning` - Brightness, contrast, saturation, etc.
+  - `filters` - Apply filters
+  - `blur` - Blur effects
+  - `sharp` - Sharpen
+  - `enhance` - Auto-enhance
+</ParamField>
+
+<ParamField path="cloudImageEditorAutoOpen" type="boolean">
+  Automatically open the cloud image editor after selecting an image.
+  
+  **Default:** `false`
+</ParamField>
+
+<ParamField path="cloudImageEditorMaskHref" type="string | null">
+  URL to a mask image for the cloud image editor.
+  
+  **Default:** `null`
+</ParamField>
+
+<ParamField path="qualityInsights" type="boolean">
+  Enable quality insights for uploaded images. Shows warnings about image quality issues.
+  
+  **Default:** `true`
+</ParamField>
+
+<ParamField path="removeCopyright" type="boolean">
+  Remove copyright information from images.
+  
+  **Default:** `false`
+</ParamField>
+
+## UI Configuration
+
+<ParamField path="thumbSize" type="number">
+  Thumbnail size in pixels.
+  
+  **Default:** `76`
+</ParamField>
+
+<ParamField path="showEmptyList" type="boolean">
+  Show the upload list even if it is empty.
+  
+  **Default:** `false`
+</ParamField>
+
+<ParamField path="filesViewMode" type="'grid' | 'list'">
+  Display mode for the files list.
+  
+  **Default:** `'list'`
+  
+  - `'list'` - Show files in a list view
+  - `'grid'` - Show files in a grid view
+</ParamField>
+
+<ParamField path="gridShowFileNames" type="boolean">
+  Show file names in grid view mode.
+  
+  **Default:** `false`
+</ParamField>
+
+<ParamField path="modalScrollLock" type="boolean">
+  Lock scroll when modal is open. Prevents scrolling of the page behind the modal.
+  
+  **Default:** `true`
+</ParamField>
+
+<ParamField path="modalBackdropStrokes" type="boolean">
+  Show animated strokes on modal backdrop for a more engaging appearance.
+  
+  **Default:** `false`
+</ParamField>
+
+## Localization
+
+<ParamField path="localeName" type="string">
+  Locale name for the uploader. Determines the language of the UI.
+  
+  **Default:** `'en'`
+  
+  **Supported locales:**
+  - `'en'` - English
+  - `'ar'` - Arabic
+  - `'az'` - Azerbaijani
+  - `'ca'` - Catalan
+  - `'cs'` - Czech
+  - `'da'` - Danish
+  - `'de'` - German
+  - `'el'` - Greek
+  - `'es'` - Spanish
+  - `'et'` - Estonian
+  - `'fr'` - French
+  - `'he'` - Hebrew
+  - `'it'` - Italian
+  - `'ja'` - Japanese
+  - `'ko'` - Korean
+  - `'lv'` - Latvian
+  - `'nb'` - Norwegian Bokmål
+  - `'nl'` - Dutch
+  - `'pl'` - Polish
+  - `'pt'` - Portuguese
+  - `'ro'` - Romanian
+  - `'ru'` - Russian
+  - `'sk'` - Slovak
+  - `'sr'` - Serbian
+  - `'sv'` - Swedish
+  - `'tr'` - Turkish
+  - `'uk'` - Ukrainian
+  - `'vi'` - Vietnamese
+  - `'zh'` - Chinese
+  - `'zh-TW'` - Chinese (Taiwan)
+  
+  ```html
+  <uc-config locale-name="es"></uc-config>
+  ```
+</ParamField>
+
+<ParamField path="localeDefinitionOverride" type="LocaleDefinitionOverride | null">
+  Override locale definitions. Allows customizing translation strings.
+  
+  **Default:** `null`
+  
+  <Note>
+  This is a complex type that must be set via JavaScript, not as an HTML attribute.
+  </Note>
+  
+  ```javascript
+  const config = document.querySelector('uc-config');
+  config.localeDefinitionOverride = {
+    en: {
+      'upload-file': 'Select File',
+      'upload-files': 'Select Files'
+    }
+  };
+  ```
+</ParamField>
+
+## Metadata
+
+<ParamField path="metadata" type="Metadata | MetadataCallback | null">
+  Metadata for uploaded files. Can be a static object or a callback function that returns metadata for each file.
+  
+  **Default:** `null`
+  
+  <Note>
+  This is a complex type that must be set via JavaScript, not as an HTML attribute.
+  </Note>
+  
+  ```javascript
+  // Static metadata for all files
+  const config = document.querySelector('uc-config');
+  config.metadata = {
+    userId: '12345',
+    source: 'web-app'
+  };
+  
+  // Dynamic metadata per file
+  config.metadata = async (fileEntry) => {
+    return {
+      fileName: fileEntry.name,
+      uploadedAt: new Date().toISOString()
+    };
+  };
+  ```
+</ParamField>
+
+## Advanced Configuration
+
+<ParamField path="iconHrefResolver" type="IconHrefResolver | null">
+  Resolver function for icon href. Allows customizing icon URLs.
+  
+  **Default:** `null`
+  
+  <Note>
+  This is a complex type that must be set via JavaScript, not as an HTML attribute.
+  </Note>
+  
+  ```javascript
+  const config = document.querySelector('uc-config');
+  config.iconHrefResolver = (iconName) => {
+    return `/custom-icons/${iconName}.svg`;
+  };
+  ```
+</ParamField>
+
+<ParamField path="userAgentIntegration" type="string">
+  User agent integration string. Used to identify the integration in analytics.
+  
+  **Default:** `''`
+</ParamField>
+
+<ParamField path="pasteScope" type="'local' | 'global' | false">
+  Define the clipboard paste scope.
+  
+  **Default:** `'local'`
+  
+  - `'local'` - Paste is only active when the uploader is focused
+  - `'global'` - Paste is active anywhere on the page
+  - `false` - Paste is disabled
+</ParamField>
+
+<ParamField path="testMode" type="boolean">
+  Adds data-testid attributes to each block. Needed for testing purposes.
+  
+  **Default:** `false`
+</ParamField>
+
+<ParamField path="debug" type="boolean">
+  Enable debug mode. Outputs detailed logs to the console.
+  
+  **Default:** `false`
+  
+  ```html
+  <uc-config debug="true"></uc-config>
+  ```
+</ParamField>
+
+## Configuration Methods
+
+### Setting Options via HTML Attributes
+
+Simple configuration options can be set directly as HTML attributes. Use kebab-case for attribute names:
+
+```html
+<uc-config
+  pubkey="YOUR_PUBLIC_KEY"
+  multiple="true"
+  multiple-max="10"
+  img-only="false"
+  max-local-file-size-bytes="10485760"
+></uc-config>
+```
+
+### Setting Options via JavaScript
+
+Complex options (objects, functions, arrays) must be set via JavaScript:
+
+```javascript
+const config = document.querySelector('uc-config');
+
+// Set simple options
+config.multiple = true;
+config.multipleMax = 10;
+
+// Set complex options
+config.metadata = { userId: '12345' };
+config.fileValidators = [
+  (file) => {
+    if (file.size > 1000000) {
+      return { message: 'File is too large' };
+    }
+  }
+];
+```
+
+### Setting Options in Frameworks
+
+<Tabs>
+  <Tab title="React">
+    ```jsx
+    import { FileUploaderRegular } from '@uploadcare/react-uploader';
+    
+    function App() {
+      const handleMetadata = (fileEntry) => {
+        return {
+          fileName: fileEntry.name,
+          uploadedAt: new Date().toISOString()
+        };
+      };
+      
+      return (
+        <FileUploaderRegular
+          pubkey="YOUR_PUBLIC_KEY"
+          multiple={true}
+          multipleMax={10}
+          metadata={handleMetadata}
+        />
+      );
+    }
+    ```
+  </Tab>
+  
+  <Tab title="Vue">
+    ```vue
+    <template>
+      <file-uploader-regular
+        :pubkey="pubkey"
+        :multiple="true"
+        :multiple-max="10"
+        :metadata="handleMetadata"
+      />
+    </template>
+    
+    <script>
+    import { FileUploaderRegular } from '@uploadcare/vue-uploader';
+    
+    export default {
+      components: {
+        FileUploaderRegular
+      },
+      data() {
+        return {
+          pubkey: 'YOUR_PUBLIC_KEY'
+        };
+      },
+      methods: {
+        handleMetadata(fileEntry) {
+          return {
+            fileName: fileEntry.name,
+            uploadedAt: new Date().toISOString()
+          };
+        }
+      }
+    };
+    </script>
+    ```
+  </Tab>
+  
+  <Tab title="Angular">
+    ```typescript
+    import { Component } from '@angular/core';
+    
+    @Component({
+      selector: 'app-root',
+      template: `
+        <file-uploader-regular
+          [pubkey]="pubkey"
+          [multiple]="true"
+          [multipleMax]="10"
+          [metadata]="handleMetadata"
+        ></file-uploader-regular>
+      `
+    })
+    export class AppComponent {
+      pubkey = 'YOUR_PUBLIC_KEY';
+      
+      handleMetadata = (fileEntry: any) => {
+        return {
+          fileName: fileEntry.name,
+          uploadedAt: new Date().toISOString()
+        };
+      };
+    }
+    ```
+  </Tab>
+</Tabs>
+
+## Type Definitions
+
+### FileValidator
+
+```typescript
+type FuncFileValidator = (
+  fileEntry: OutputFileEntry
+) => OutputError<OutputFileErrorType> | void | Promise<OutputError<OutputFileErrorType> | void>;
+
+type FileValidatorDescriptor = {
+  type: OutputFileErrorType;
+  validator: FuncFileValidator;
+};
+
+type FileValidator = FuncFileValidator | FileValidatorDescriptor;
+type FileValidators = FileValidator[];
+```
+
+### CollectionValidator
+
+```typescript
+type FuncCollectionValidator = (
+  collection: OutputFileEntry[]
+) => OutputError<OutputCollectionErrorType> | void | Promise<OutputError<OutputCollectionErrorType> | void>;
+
+type CollectionValidators = FuncCollectionValidator[];
+```
+
+### MetadataCallback
+
+```typescript
+type Metadata = Record<string, string>;
+
+type MetadataCallback = (
+  fileEntry: OutputFileEntry
+) => Promise<Metadata> | Metadata;
+```
+
+### SecureUploadsSignatureResolver
+
+```typescript
+type SecureUploadsSignatureAndExpire = {
+  secureSignature: string;
+  secureExpire: string;
+};
+
+type SecureUploadsSignatureResolver = () => Promise<SecureUploadsSignatureAndExpire | null>;
+```
+
+### SecureDeliveryProxyUrlResolver
+
+```typescript
+type SecureDeliveryProxyUrlResolver = (
+  previewUrl: string,
+  urlParts: {
+    uuid: string;
+    cdnUrlModifiers: string;
+    fileName: string;
+  }
+) => Promise<string> | string;
+```
+
+### IconHrefResolver
+
+```typescript
+type IconHrefResolver = (iconName: string) => string;
+```
+
+### LocaleDefinitionOverride
+
+```typescript
+type LocaleDefinitionOverride = Record<string, Partial<LocaleDefinition>>;
+```
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Use Auto Store for Production">
+    Set `store` to `'auto'` to use your project's default storage setting. This makes it easier to manage storage behavior across different environments.
+    
+    ```html
+    <uc-config store="auto"></uc-config>
+    ```
+  </Accordion>
+  
+  <Accordion title="Validate Files Early">
+    Use `fileValidators` to validate files before they're uploaded. This provides immediate feedback to users and reduces unnecessary upload traffic.
+    
+    ```javascript
+    config.fileValidators = [
+      (file) => {
+        // Check file size
+        if (file.size > 5 * 1024 * 1024) {
+          return { message: 'File must be smaller than 5MB' };
+        }
+        
+        // Check file type
+        if (!file.mimeType.startsWith('image/')) {
+          return { message: 'Only images are allowed' };
+        }
+      }
+    ];
+    ```
+  </Accordion>
+  
+  <Accordion title="Use Secure Uploads for Sensitive Applications">
+    Implement secure uploads using `secureUploadsSignatureResolver` to prevent unauthorized file uploads.
+    
+    ```javascript
+    config.secureUploadsSignatureResolver = async () => {
+      const response = await fetch('/api/uploadcare-signature');
+      return await response.json();
+    };
+    ```
+  </Accordion>
+  
+  <Accordion title="Optimize Multipart Upload Settings">
+    Adjust multipart upload settings based on your users' typical connection speeds. For users with slower connections, consider using smaller chunk sizes.
+    
+    ```html
+    <uc-config
+      multipart-min-file-size="10485760"
+      multipart-chunk-size="2097152"
+    ></uc-config>
+    ```
+  </Accordion>
+  
+  <Accordion title="Customize Source List">
+    Only include the upload sources that your users actually need. This simplifies the UI and improves the user experience.
+    
+    ```html
+    <uc-config source-list="local, camera, url"></uc-config>
+    ```
+  </Accordion>
+  
+  <Accordion title="Add Metadata for Organization">
+    Use the `metadata` option to attach custom data to uploaded files. This helps with organizing and tracking files in your application.
+    
+    ```javascript
+    config.metadata = {
+      userId: currentUser.id,
+      context: 'profile-photo',
+      uploadedFrom: 'web-app'
+    };
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Related Resources
+
+- [Quick Start Guide](/quickstart)
+- [Validation](/advanced/validation)
+- [Secure Uploads](https://uploadcare.com/docs/security/secure-uploads/)
+- [File Metadata](https://uploadcare.com/docs/files-and-metadata/)

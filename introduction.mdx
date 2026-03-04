@@ -1,0 +1,149 @@
+---
+title: Introduction
+description: Building blocks for Uploadcare products integration - a modern file uploader built with Web Components
+---
+
+# Introduction to Uploadcare File Uploader
+
+Uploadcare File Uploader is a powerful, flexible file upload library built with Web Components. It provides everything you need to add file uploads to your application, with support for multiple upload sources, image editing, and extensive customization options.
+
+## Key Features
+
+<CardGroup cols={2}>
+  <Card title="Multiple Upload Sources" icon="cloud-arrow-up">
+    Drop files, select from filesystem, use URLs, camera, Dropbox, Google Drive, or upload via API
+  </Card>
+  <Card title="Large File Handling" icon="file-zipper">
+    Upload faster with chunking, automatic retries, and resumable uploads for large files
+  </Card>
+  <Card title="Customizable Appearance" icon="palette">
+    Use pre-built themes or modify styles with CSS to match your project's design
+  </Card>
+  <Card title="Advanced Image Editing" icon="image">
+    Built-in image editor with cropping, resizing, filters, and smart transformations
+  </Card>
+</CardGroup>
+
+## Why Choose File Uploader?
+
+### Framework Agnostic
+
+Built with [Web Components](https://developer.mozilla.org/en-US/docs/Web/API/Web_components), File Uploader works seamlessly with any framework or environment—no adapters required. Use it with React, Vue, Angular, Svelte, or vanilla JavaScript.
+
+### Fully Accessible
+
+File Uploader includes comprehensive accessibility features:
+- Keyboard navigation support
+- Screen reader compatibility
+- WCAG-compliant color contrast
+- ARIA attributes for all interactive elements
+
+### Production Ready
+
+File Uploader is battle-tested and includes:
+- **TypeScript support** with full type definitions
+- **Cross-browser compatibility** - works on latest Chrome, Edge, Firefox, Opera, and Safari
+- **Responsive design** - adapts to any device size
+- **Secure uploads** with automatic malware and inappropriate content detection
+
+## Available Solutions
+
+File Uploader provides three pre-built solutions to fit different use cases:
+
+### Regular Uploader
+
+A modal-based uploader with a button that opens an upload dialog. Perfect for forms and applications where uploads are occasional.
+
+```html
+<uc-file-uploader-regular ctx-name="my-uploader"></uc-file-uploader-regular>
+<uc-config ctx-name="my-uploader" pubkey="YOUR_PUBLIC_KEY"></uc-config>
+```
+
+### Inline Uploader
+
+An embedded uploader that's always visible on the page. Ideal for dedicated upload pages or when uploads are a primary action.
+
+```html
+<uc-file-uploader-inline ctx-name="my-uploader"></uc-file-uploader-inline>
+<uc-config ctx-name="my-uploader" pubkey="YOUR_PUBLIC_KEY"></uc-config>
+```
+
+### Minimal Uploader
+
+A lightweight uploader with minimal UI. Great for custom implementations where you want full control over the appearance.
+
+```html
+<uc-file-uploader-minimal ctx-name="my-uploader"></uc-file-uploader-minimal>
+<uc-config ctx-name="my-uploader" pubkey="YOUR_PUBLIC_KEY"></uc-config>
+```
+
+## Core Concepts
+
+### Context-Based Architecture
+
+File Uploader uses a context-based architecture where multiple components share state through a `ctx-name` attribute:
+
+- **Uploader component** - The UI for file selection and upload
+- **Config component** - Configuration and API key management
+- **Upload Context Provider** (optional) - Programmatic access to upload state and events
+
+All components with the same `ctx-name` work together as a single upload instance.
+
+### Upload Sources
+
+File Uploader supports multiple upload sources out of the box:
+
+- **From device** - Local file system selection
+- **From link** - URL-based file imports
+- **Camera** - Photo and video capture
+- **Dropbox** - Import from Dropbox
+- **Google Drive** - Import from Google Drive
+- **OneDrive** - Import from Microsoft OneDrive
+- **Facebook** - Import from Facebook
+- **Instagram** - Import from Instagram
+- **Flickr** - Import from Flickr
+- **VK** - Import from VK
+- **Evernote** - Import from Evernote
+- **Box** - Import from Box
+- **Huddle** - Import from Huddle
+- **GPhotos** - Import from Google Photos
+
+### Configuration
+
+All configuration is managed through the `<uc-config>` component. You can configure:
+
+- Upload behavior (multiple files, file types, size limits)
+- UI appearance and themes
+- Image editing options
+- Upload sources
+- Validation rules
+- And much more
+
+<Note>
+  Configuration options can be set via HTML attributes (kebab-case), JavaScript properties (camelCase), or both.
+</Note>
+
+## Browser Support
+
+File Uploader supports the latest stable versions of:
+
+- Chrome (desktop and mobile)
+- Edge
+- Firefox
+- Opera
+- Safari (desktop and mobile)
+
+<Warning>
+  Internet Explorer is not supported. Microsoft ended support for IE on June 15, 2022.
+</Warning>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Installation" icon="download" href="./installation">
+    Install File Uploader in your project
+  </Card>
+  <Card title="Quick Start" icon="rocket" href="./quickstart">
+    Build your first upload form
+  </Card>
+</CardGroup>

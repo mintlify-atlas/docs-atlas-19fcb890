@@ -1,0 +1,212 @@
+---
+title: defineComponents
+description: Register File Uploader Web Components with the custom elements registry, enabling their use in your application.
+---
+
+`defineComponents` is a utility function that registers all File Uploader Web Components with the browser's custom elements registry. This must be called before you can use any File Uploader components in your HTML.
+
+## Signature
+
+```ts
+function defineComponents(blockExports: Record<string, any>): void
+```
+
+<ParamField path="blockExports" type="Record<string, any>" required>
+  An object containing the File Uploader component exports, typically the entire module import
+</ParamField>
+
+## Usage
+
+### Basic Usage
+
+<CodeGroup>
+```js CDN
+<script type="module">
+  import * as UC from 'https://cdn.jsdelivr.net/npm/@uploadcare/file-uploader@1/web/file-uploader.min.js';
+
+  UC.defineComponents(UC);
+</script>
+```
+
+```js NPM
+import * as UC from '@uploadcare/file-uploader';
+
+UC.defineComponents(UC);
+```
+</CodeGroup>
+
+After calling `defineComponents`, all File Uploader Web Components are registered and ready to use:
+
+```html
+<uc-config ctx-name="my-uploader" pubkey="YOUR_PUBLIC_KEY"></uc-config>
+<uc-file-uploader-regular ctx-name="my-uploader"></uc-file-uploader-regular>
+```
+
+## How It Works
+
+The function automatically:
+
+1. **Iterates through component exports** - Processes all exported components from the module
+2. **Converts to kebab-case** - Transforms component names from PascalCase to kebab-case
+3. **Adds `uc-` prefix** - Ensures all components have the `uc-` prefix
+4. **Registers components** - Calls each component's `reg()` method to register it with the custom elements registry
+
+### Name Transformation Examples
+
+| Component Class | Registered Tag Name |
+|----------------|--------------------|
+| `FileUploaderRegular` | `uc-file-uploader-regular` |
+| `Config` | `uc-config` |
+| `UploadList` | `uc-upload-list` |
+| `DropArea` | `uc-drop-area` |
+
+## Excluded Components
+
+The following base classes are automatically excluded from registration as they are not meant to be used directly:
+
+- `UploaderBlock`
+- `ActivityBlock`
+- `Block`
+- `SolutionBlock`
+
+## Implementation Details
+
+Here's the actual implementation from the source code:
+
+```ts
+const EXCLUDE_COMPONENTS = ['UploaderBlock', 'ActivityBlock', 'Block', 'SolutionBlock'];
+
+export function defineComponents(blockExports: Record<string, any>) {
+  for (const blockName in blockExports) {
+    if (EXCLUDE_COMPONENTS.includes(blockName)) {
+      continue;
+    }
+    let tagName = [...blockName].reduce((name, char) => {
+      if (char.toUpperCase() === char) {
+        char = `-${char.toLowerCase()}`;
+      }
+      name += char;
+      return name;
+    }, '');
+    if (tagName.startsWith('-')) {
+      tagName = tagName.replace('-', '');
+    }
+
+    if (!tagName.startsWith('uc-')) {
+      tagName = `uc-${tagName}`;
+    }
+    if (blockExports[blockName].reg) {
+      blockExports[blockName].reg(tagName);
+    }
+  }
+}
+```
+
+## When to Use
+
+<Note>
+You must call `defineComponents` **once** in your application before using any File Uploader components. Typically, this is done in your main application entry point or at the top of your script.
+</Note>
+
+### Framework-Specific Examples
+
+<CodeGroup>
+```js React
+// src/index.js or src/App.js
+import * as UC from '@uploadcare/file-uploader';
+
+UC.defineComponents(UC);
+
+function App() {
+  return (
+    <div>
+      <uc-config ctx-name="uploader" pubkey="YOUR_PUBLIC_KEY" />
+      <uc-file-uploader-inline ctx-name="uploader" />
+    </div>
+  );
+}
+```
+
+```js Vue
+// src/main.js
+import * as UC from '@uploadcare/file-uploader';
+
+UC.defineComponents(UC);
+
+const app = createApp(App);
+app.mount('#app');
+```
+
+```js Angular
+// src/main.ts
+import * as UC from '@uploadcare/file-uploader';
+
+UC.defineComponents(UC);
+
+platformBrowserDynamic()
+  .bootstrapModule(AppModule)
+  .catch(err => console.error(err));
+```
+
+```js Svelte
+<!-- src/App.svelte -->
+<script>
+import * as UC from '@uploadcare/file-uploader';
+
+UC.defineComponents(UC);
+</script>
+
+<uc-config ctx-name="uploader" pubkey="YOUR_PUBLIC_KEY" />
+<uc-file-uploader-minimal ctx-name="uploader" />
+```
+</CodeGroup>
+
+## Common Issues
+
+### Components Not Rendering
+
+If your components aren't rendering, ensure you've called `defineComponents` before the components are added to the DOM:
+
+```js
+// ❌ Wrong - Components used before definition
+document.body.innerHTML = '<uc-file-uploader-regular />';
+import * as UC from '@uploadcare/file-uploader';
+UC.defineComponents(UC);
+
+// ✅ Correct - Components defined first
+import * as UC from '@uploadcare/file-uploader';
+UC.defineComponents(UC);
+document.body.innerHTML = '<uc-file-uploader-regular />';
+```
+
+### Multiple Definitions
+
+Calling `defineComponents` multiple times is generally safe, but unnecessary. The browser's custom elements registry will handle duplicate registrations gracefully.
+
+## TypeScript Support
+
+When using TypeScript, you may want to add type definitions for the custom elements:
+
+```ts
+import * as UC from '@uploadcare/file-uploader';
+
+UC.defineComponents(UC);
+
+// Optional: Extend JSX types for React
+declare global {
+  namespace JSX {
+    interface IntrinsicElements {
+      'uc-file-uploader-regular': any;
+      'uc-file-uploader-inline': any;
+      'uc-file-uploader-minimal': any;
+      'uc-config': any;
+    }
+  }
+}
+```
+
+## See Also
+
+- [Configuration](/concepts/configuration) - Learn how to configure the uploader
+- [Solutions](/concepts/solutions) - Available uploader solutions
+- [UploaderPublicApi](/api/uploader-public-api) - Programmatic API reference

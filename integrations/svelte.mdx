@@ -1,0 +1,478 @@
+---
+title: "Svelte Integration"
+description: "Integrate Uploadcare File Uploader in Svelte and SvelteKit applications"
+---
+
+## Overview
+
+Uploadcare File Uploader works seamlessly with Svelte and SvelteKit applications. This guide covers integration for both traditional Svelte apps and SvelteKit with SSR considerations.
+
+## Installation
+
+Install the File Uploader package:
+
+```bash
+npm install @uploadcare/file-uploader
+```
+
+## Basic Svelte Component
+
+Create a Svelte component with the File Uploader:
+
+```svelte FileUploader.svelte
+<script lang="ts">
+  import { onMount } from 'svelte';
+  import * as UC from '@uploadcare/file-uploader';
+  import '@uploadcare/file-uploader/index.css';
+
+  export let publicKey: string = 'YOUR_PUBLIC_KEY';
+
+  onMount(() => {
+    UC.defineComponents(UC);
+  });
+</script>
+
+<div>
+  <uc-config
+    ctx-name="my-uploader"
+    pubkey={publicKey}
+  />
+  <uc-file-uploader-regular
+    ctx-name="my-uploader"
+  />
+</div>
+```
+
+<Note>
+Replace `YOUR_PUBLIC_KEY` with your actual Uploadcare public key from your [dashboard](https://app.uploadcare.com/projects/-/api-keys/).
+</Note>
+
+## Handling Upload Events
+
+Use `bind:this` to get references and handle events:
+
+```svelte FileUploaderWithEvents.svelte
+<script lang="ts">
+  import { onMount, onDestroy } from 'svelte';
+  import * as UC from '@uploadcare/file-uploader';
+  import '@uploadcare/file-uploader/index.css';
+
+  export let publicKey: string = 'YOUR_PUBLIC_KEY';
+
+  let ctxProvider: any;
+
+  const handleUploadSuccess = (e: CustomEvent) => {
+    console.log('File uploaded:', e.detail);
+    const { uuid, cdnUrl, name } = e.detail;
+    // Handle the uploaded file
+  };
+
+  const handleFileAdded = (e: CustomEvent) => {
+    console.log('File added:', e.detail);
+  };
+
+  const handleError = (e: CustomEvent) => {
+    console.error('Upload error:', e.detail);
+  };
+
+  onMount(() => {
+    UC.defineComponents(UC);
+
+    if (ctxProvider) {
+      ctxProvider.addEventListener('file-upload-success', handleUploadSuccess);
+      ctxProvider.addEventListener('file-added', handleFileAdded);
+      ctxProvider.addEventListener('upload-error', handleError);
+    }
+  });
+
+  onDestroy(() => {
+    if (ctxProvider) {
+      ctxProvider.removeEventListener('file-upload-success', handleUploadSuccess);
+      ctxProvider.removeEventListener('file-added', handleFileAdded);
+      ctxProvider.removeEventListener('upload-error', handleError);
+    }
+  });
+</script>
+
+<div>
+  <uc-config
+    ctx-name="my-uploader"
+    pubkey={publicKey}
+  />
+  <uc-file-uploader-regular
+    ctx-name="my-uploader"
+  />
+  <uc-upload-ctx-provider
+    bind:this={ctxProvider}
+    ctx-name="my-uploader"
+  />
+</div>
+```
+
+## SvelteKit Integration
+
+### Client-Side Only Component
+
+For SvelteKit, use dynamic imports to load the uploader only on the client:
+
+```svelte routes/+page.svelte
+<script lang="ts">
+  import { browser } from '$app/environment';
+  import { onMount } from 'svelte';
+
+  let FileUploader: any;
+
+  onMount(async () => {
+    if (browser) {
+      const module = await import('$lib/components/FileUploader.svelte');
+      FileUploader = module.default;
+    }
+  });
+</script>
+
+<svelte:component this={FileUploader} publicKey="YOUR_PUBLIC_KEY" />
+```
+
+Create the uploader component:
+
+```svelte lib/components/FileUploader.svelte
+<script lang="ts">
+  import { onMount } from 'svelte';
+  import * as UC from '@uploadcare/file-uploader';
+  import '@uploadcare/file-uploader/index.css';
+
+  export let publicKey: string;
+
+  onMount(() => {
+    UC.defineComponents(UC);
+  });
+</script>
+
+<div>
+  <uc-config
+    ctx-name="my-uploader"
+    pubkey={publicKey}
+  />
+  <uc-file-uploader-regular
+    ctx-name="my-uploader"
+  />
+</div>
+```
+
+### Alternative: Browser Check
+
+Another approach using the browser check:
+
+```svelte routes/upload/+page.svelte
+<script lang="ts">
+  import { browser } from '$app/environment';
+  import { onMount } from 'svelte';
+  import * as UC from '@uploadcare/file-uploader';
+  import '@uploadcare/file-uploader/index.css';
+
+  export let data;
+
+  $: if (browser) {
+    onMount(() => {
+      UC.defineComponents(UC);
+    });
+  }
+</script>
+
+{#if browser}
+  <div>
+    <uc-config
+      ctx-name="my-uploader"
+      pubkey={data.publicKey}
+    />
+    <uc-file-uploader-regular
+      ctx-name="my-uploader"
+    />
+  </div>
+{/if}
+```
+
+## Configuration
+
+Pass configuration as props:
+
+```svelte
+<uc-config
+  ctx-name="my-uploader"
+  pubkey={publicKey}
+  multiple={true}
+  img-only={false}
+  source-list="local, url, camera, dropbox"
+  max-local-file-size-bytes={52428800}
+/>
+```
+
+## Form Integration
+
+Integrate with Svelte forms:
+
+```svelte FormWithUpload.svelte
+<script lang="ts">
+  import { onMount, onDestroy } from 'svelte';
+  import * as UC from '@uploadcare/file-uploader';
+  import '@uploadcare/file-uploader/index.css';
+
+  export let publicKey: string = 'YOUR_PUBLIC_KEY';
+
+  let ctxProvider: any;
+  let uploadedFiles: string[] = [];
+
+  const handleUploadSuccess = (e: CustomEvent) => {
+    uploadedFiles = [...uploadedFiles, e.detail.uuid];
+  };
+
+  const handleSubmit = () => {
+    console.log('Submitted with files:', uploadedFiles);
+    // Send to your API
+  };
+
+  onMount(() => {
+    UC.defineComponents(UC);
+
+    if (ctxProvider) {
+      ctxProvider.addEventListener('file-upload-success', handleUploadSuccess);
+    }
+  });
+
+  onDestroy(() => {
+    if (ctxProvider) {
+      ctxProvider.removeEventListener('file-upload-success', handleUploadSuccess);
+    }
+  });
+</script>
+
+<form on:submit|preventDefault={handleSubmit}>
+  <uc-config
+    ctx-name="my-uploader"
+    pubkey={publicKey}
+    multiple={true}
+  />
+  <uc-file-uploader-regular ctx-name="my-uploader">
+    <uc-form-input ctx-name="my-uploader" name="files" />
+  </uc-file-uploader-regular>
+  <uc-upload-ctx-provider
+    bind:this={ctxProvider}
+    ctx-name="my-uploader"
+  />
+  <button type="submit">Submit</button>
+</form>
+```
+
+## Available Solutions
+
+<Tabs>
+  <Tab title="Regular">
+    ```svelte
+    <uc-file-uploader-regular ctx-name="my-uploader" />
+    ```
+    Modal-based uploader with full features.
+  </Tab>
+  <Tab title="Inline">
+    ```svelte
+    <uc-file-uploader-inline ctx-name="my-uploader" />
+    ```
+    Inline uploader for embedded use.
+  </Tab>
+  <Tab title="Minimal">
+    ```svelte
+    <uc-file-uploader-minimal ctx-name="my-uploader" />
+    ```
+    Minimalist uploader with basic controls.
+  </Tab>
+</Tabs>
+
+## Custom Store Pattern
+
+Create a Svelte store for managing upload state:
+
+```typescript lib/stores/uploader.ts
+import { writable } from 'svelte/store';
+import * as UC from '@uploadcare/file-uploader';
+
+export interface UploadedFile {
+  uuid: string;
+  cdnUrl: string;
+  name: string;
+}
+
+function createUploaderStore() {
+  const { subscribe, update } = writable<UploadedFile[]>([]);
+  let initialized = false;
+
+  return {
+    subscribe,
+    initialize: () => {
+      if (!initialized) {
+        UC.defineComponents(UC);
+        initialized = true;
+      }
+    },
+    addFile: (file: UploadedFile) => {
+      update(files => [...files, file]);
+    },
+    clear: () => {
+      update(() => []);
+    },
+  };
+}
+
+export const uploaderStore = createUploaderStore();
+```
+
+Use the store in your component:
+
+```svelte
+<script lang="ts">
+  import { onMount } from 'svelte';
+  import { uploaderStore } from '$lib/stores/uploader';
+  import '@uploadcare/file-uploader/index.css';
+
+  let ctxProvider: any;
+
+  onMount(() => {
+    uploaderStore.initialize();
+
+    if (ctxProvider) {
+      ctxProvider.addEventListener('file-upload-success', (e: CustomEvent) => {
+        const { uuid, cdnUrl, name } = e.detail;
+        uploaderStore.addFile({ uuid, cdnUrl, name });
+      });
+    }
+  });
+</script>
+
+<div>
+  <uc-config ctx-name="my-uploader" pubkey="YOUR_PUBLIC_KEY" />
+  <uc-file-uploader-regular ctx-name="my-uploader" />
+  <uc-upload-ctx-provider bind:this={ctxProvider} ctx-name="my-uploader" />
+
+  <div>
+    <h3>Uploaded Files: {$uploaderStore.length}</h3>
+    {#each $uploaderStore as file}
+      <div>{file.name}</div>
+    {/each}
+  </div>
+</div>
+```
+
+## Custom Styling
+
+Style the uploader with CSS:
+
+```svelte
+<style>
+  :global(uc-file-uploader-regular) {
+    --uc-primary-color: #ff3e00;
+    --uc-secondary-color: #676778;
+    --uc-border-radius: 8px;
+  }
+</style>
+```
+
+<Note>
+Use `:global()` to style Web Components from Svelte's scoped styles.
+</Note>
+
+## Environment Variables
+
+Use SvelteKit's environment variables:
+
+```typescript .env
+PUBLIC_UPLOADCARE_PUBLIC_KEY=your_public_key_here
+```
+
+Access in your component:
+
+```svelte
+<script lang="ts">
+  import { PUBLIC_UPLOADCARE_PUBLIC_KEY } from '$env/static/public';
+
+  const publicKey = PUBLIC_UPLOADCARE_PUBLIC_KEY;
+</script>
+
+<uc-config ctx-name="my-uploader" pubkey={publicKey} />
+```
+
+## TypeScript Support
+
+Add type declarations for custom elements:
+
+```typescript app.d.ts
+declare namespace svelteHTML {
+  interface IntrinsicElements {
+    'uc-config': any;
+    'uc-file-uploader-regular': any;
+    'uc-file-uploader-inline': any;
+    'uc-file-uploader-minimal': any;
+    'uc-upload-ctx-provider': any;
+    'uc-form-input': any;
+  }
+}
+```
+
+## Best Practices
+
+<Steps>
+  <Step title="Initialize Once">
+    Call `defineComponents()` once in `onMount()` or use a store to manage initialization.
+  </Step>
+  <Step title="Handle SSR">
+    For SvelteKit, ensure the uploader is loaded only on the client using browser checks or dynamic imports.
+  </Step>
+  <Step title="Clean Up Event Listeners">
+    Remove event listeners in `onDestroy()` to prevent memory leaks.
+  </Step>
+  <Step title="Use Stores">
+    Create Svelte stores to manage upload state across components.
+  </Step>
+</Steps>
+
+## Troubleshooting
+
+### SSR Errors
+
+If you see "window is not defined" errors, ensure you're loading the uploader only on the client:
+
+```svelte
+<script>
+  import { browser } from '$app/environment';
+  
+  $: if (browser) {
+    // Initialize uploader
+  }
+</script>
+```
+
+### Events Not Firing
+
+Make sure to attach event listeners after `onMount()` and to the `uc-upload-ctx-provider` element.
+
+### CSS Not Loading
+
+Import the CSS in your component:
+
+```typescript
+import '@uploadcare/file-uploader/index.css';
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Configuration" icon="gear" href="/api/configuration-options">
+    Explore all configuration options
+  </Card>
+  <Card title="Events API" icon="bolt" href="/api/types/events">
+    Learn about available events
+  </Card>
+  <Card title="Live Examples" icon="code" href="https://github.com/uploadcare/file-uploader-examples/tree/main/examples/svelte-uploader">
+    View complete Svelte examples
+  </Card>
+  <Card title="Styling" icon="palette" href="/customization/styling">
+    Learn how to customize the appearance
+  </Card>
+</CardGroup>

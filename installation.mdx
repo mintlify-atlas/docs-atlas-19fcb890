@@ -1,0 +1,271 @@
+---
+title: Installation
+description: Install Uploadcare File Uploader using npm, yarn, pnpm, or CDN
+---
+
+# Installation
+
+Uploadcare File Uploader can be installed using a package manager or loaded directly from a CDN. Choose the method that works best for your project.
+
+## Package Managers
+
+Install File Uploader using your preferred package manager:
+
+<CodeGroup>
+
+```bash npm
+npm install @uploadcare/file-uploader
+```
+
+```bash yarn
+yarn add @uploadcare/file-uploader
+```
+
+```bash pnpm
+pnpm add @uploadcare/file-uploader
+```
+
+</CodeGroup>
+
+The package is published as `@uploadcare/file-uploader` version `1.27.1` and includes:
+
+- ES modules with tree-shaking support
+- TypeScript definitions
+- Pre-built CSS stylesheets
+- Web component bundles
+- Locale files for internationalization
+
+## CDN Installation
+
+For quick prototyping or projects without a build system, load File Uploader directly from a CDN:
+
+### Using ES Modules
+
+```html
+<script type="module">
+  import * as UC from 'https://cdn.jsdelivr.net/npm/@uploadcare/file-uploader@1/web/file-uploader.min.js';
+  
+  UC.defineComponents(UC);
+</script>
+```
+
+### Using IIFE Bundle
+
+For environments that don't support ES modules:
+
+```html
+<script src="https://cdn.jsdelivr.net/npm/@uploadcare/file-uploader@1/web/file-uploader.iife.min.js"></script>
+<script>
+  UC.defineComponents(UC);
+</script>
+```
+
+<Note>
+  The CDN URL uses `@1` to always load the latest v1.x version. For production, consider pinning to a specific version like `@1.27.1`.
+</Note>
+
+## Package Exports
+
+The package provides multiple entry points for different use cases:
+
+### Main Entry
+
+```javascript
+import * as UC from '@uploadcare/file-uploader';
+```
+
+Imports all components, utilities, and types.
+
+### Stylesheets
+
+<CodeGroup>
+
+```javascript Standard CSS
+import '@uploadcare/file-uploader/index.css';
+```
+
+```javascript Layered CSS
+import '@uploadcare/file-uploader/index.layered.css';
+```
+
+</CodeGroup>
+
+The layered CSS version uses CSS cascade layers for better style isolation and easier customization.
+
+### TypeScript Types
+
+```typescript
+import type { ConfigType, OutputFileEntry } from '@uploadcare/file-uploader/types';
+```
+
+Import types separately for better IDE performance in large projects.
+
+### Web Bundles
+
+Pre-built bundles for specific solutions:
+
+- `web/file-uploader.min.js` - Full bundle with all solutions
+- `web/uc-file-uploader-regular.min.js` - Regular uploader only
+- `web/uc-file-uploader-inline.min.js` - Inline uploader only
+- `web/uc-file-uploader-minimal.min.js` - Minimal uploader only
+- `web/uc-cloud-image-editor.min.js` - Image editor only
+
+### Locale Files
+
+```javascript
+import enLocale from '@uploadcare/file-uploader/locales/en.js';
+import esLocale from '@uploadcare/file-uploader/locales/es.js';
+
+import { defineLocale } from '@uploadcare/file-uploader';
+
+defineLocale('en', enLocale);
+defineLocale('es', esLocale);
+```
+
+## Environment Setup
+
+### Browser Environment
+
+File Uploader works in any modern browser. Simply import the package and define components:
+
+```javascript
+import * as UC from '@uploadcare/file-uploader';
+import '@uploadcare/file-uploader/index.css';
+
+UC.defineComponents(UC);
+```
+
+### Node.js / SSR Environment
+
+For server-side rendering, use the SSR-compatible entry point:
+
+```javascript
+import * as UC from '@uploadcare/file-uploader';
+
+// This import is safe for SSR - it provides no-op stubs
+UC.defineComponents(UC);
+```
+
+The package automatically provides SSR stubs when imported in a Node.js environment.
+
+<Warning>
+  Web Components cannot render on the server. The SSR entry point provides stub components that safely render on the server and hydrate properly on the client.
+</Warning>
+
+## Framework-Specific Setup
+
+### React
+
+```javascript
+import { useEffect } from 'react';
+import * as UC from '@uploadcare/file-uploader';
+import '@uploadcare/file-uploader/index.css';
+
+function App() {
+  useEffect(() => {
+    UC.defineComponents(UC);
+  }, []);
+
+  return (
+    <>
+      <uc-file-uploader-regular ctx-name="my-uploader"></uc-file-uploader-regular>
+      <uc-config ctx-name="my-uploader" pubkey="YOUR_PUBLIC_KEY"></uc-config>
+    </>
+  );
+}
+```
+
+<Note>
+  For TypeScript support in React, import the JSX types: `import '@uploadcare/file-uploader/types/jsx'`
+</Note>
+
+### Vue
+
+```vue
+<script setup>
+import * as UC from '@uploadcare/file-uploader';
+import '@uploadcare/file-uploader/index.css';
+
+UC.defineComponents(UC);
+</script>
+
+<template>
+  <uc-file-uploader-regular ctx-name="my-uploader"></uc-file-uploader-regular>
+  <uc-config ctx-name="my-uploader" pubkey="YOUR_PUBLIC_KEY"></uc-config>
+</template>
+```
+
+<Note>
+  Vue 3 supports Web Components by default. For Vue 2, you may need to configure `ignoredElements`.
+</Note>
+
+### Angular
+
+Add to `app.module.ts`:
+
+```typescript
+import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
+import * as UC from '@uploadcare/file-uploader';
+import '@uploadcare/file-uploader/index.css';
+
+UC.defineComponents(UC);
+
+@NgModule({
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
+  // ... other configuration
+})
+export class AppModule {}
+```
+
+### Svelte
+
+```svelte
+<script>
+  import { onMount } from 'svelte';
+  import * as UC from '@uploadcare/file-uploader';
+  import '@uploadcare/file-uploader/index.css';
+  
+  onMount(() => {
+    UC.defineComponents(UC);
+  });
+</script>
+
+<uc-file-uploader-regular ctx-name="my-uploader"></uc-file-uploader-regular>
+<uc-config ctx-name="my-uploader" pubkey="YOUR_PUBLIC_KEY"></uc-config>
+```
+
+## Verification
+
+To verify the installation, you can check the package version:
+
+```javascript
+import * as UC from '@uploadcare/file-uploader';
+
+console.log('File Uploader loaded successfully');
+```
+
+If components are defined correctly, you should be able to use them in your HTML:
+
+```html
+<uc-file-uploader-regular ctx-name="test"></uc-file-uploader-regular>
+<uc-config ctx-name="test" pubkey="demopublickey"></uc-config>
+```
+
+## Size Information
+
+The package is optimized for minimal bundle size:
+
+- **Main bundle**: ~100 KB (minified)
+- **Minimal uploader**: ~100 KB (minified)
+- **Image component only**: ~10 KB (minified)
+- **SSR stubs**: ~10 KB (minified)
+
+<Note>
+  The actual bundle size in your application will depend on which components you use and your bundler's tree-shaking capabilities.
+</Note>
+
+## Next Steps
+
+<Card title="Quick Start" icon="rocket" href="./quickstart">
+  Learn how to create your first file uploader
+</Card>

@@ -1,0 +1,472 @@
+---
+title: "Next.js Integration"
+description: "Integrate Uploadcare File Uploader in Next.js applications with SSR support"
+---
+
+## Overview
+
+Uploadcare File Uploader works seamlessly with Next.js, including support for both the App Router and Pages Router. This guide covers SSR considerations and best practices for Next.js integration.
+
+## Installation
+
+Install the File Uploader package:
+
+```bash
+npm install @uploadcare/file-uploader
+```
+
+## App Router (Next.js 13+)
+
+### Client Component Setup
+
+Since Web Components require browser APIs, you need to mark your uploader component as a Client Component:
+
+```tsx app/components/FileUploader.tsx
+'use client';
+
+import { useEffect, useRef } from 'react';
+import * as UC from '@uploadcare/file-uploader';
+import '@uploadcare/file-uploader/index.css';
+
+export default function FileUploader() {
+  const initialized = useRef(false);
+
+  useEffect(() => {
+    if (!initialized.current) {
+      UC.defineComponents(UC);
+      initialized.current = true;
+    }
+  }, []);
+
+  return (
+    <div>
+      <uc-config
+        ctx-name="my-uploader"
+        pubkey="YOUR_PUBLIC_KEY"
+      />
+      <uc-file-uploader-regular
+        ctx-name="my-uploader"
+      />
+    </div>
+  );
+}
+```
+
+### Using in Server Components
+
+Import your Client Component in Server Components:
+
+```tsx app/page.tsx
+import FileUploader from './components/FileUploader';
+
+export default function Page() {
+  return (
+    <main>
+      <h1>Upload Files</h1>
+      <FileUploader />
+    </main>
+  );
+}
+```
+
+<Note>
+The `'use client'` directive is required because Web Components need access to browser APIs that aren't available during SSR.
+</Note>
+
+## Pages Router
+
+### Dynamic Import with SSR Disabled
+
+For the Pages Router, use dynamic imports to prevent SSR:
+
+```tsx pages/index.tsx
+import dynamic from 'next/dynamic';
+
+const FileUploader = dynamic(
+  () => import('../components/FileUploader'),
+  { ssr: false }
+);
+
+export default function Home() {
+  return (
+    <main>
+      <h1>Upload Files</h1>
+      <FileUploader />
+    </main>
+  );
+}
+```
+
+Create the uploader component:
+
+```tsx components/FileUploader.tsx
+import { useEffect, useRef } from 'react';
+import * as UC from '@uploadcare/file-uploader';
+import '@uploadcare/file-uploader/index.css';
+
+export default function FileUploader() {
+  const initialized = useRef(false);
+
+  useEffect(() => {
+    if (!initialized.current) {
+      UC.defineComponents(UC);
+      initialized.current = true;
+    }
+  }, []);
+
+  return (
+    <div>
+      <uc-config
+        ctx-name="my-uploader"
+        pubkey="YOUR_PUBLIC_KEY"
+      />
+      <uc-file-uploader-regular
+        ctx-name="my-uploader"
+      />
+    </div>
+  );
+}
+```
+
+## TypeScript Configuration
+
+Add JSX types support in your TypeScript configuration:
+
+```tsx app/types.d.ts
+/// <reference types="@uploadcare/file-uploader/types/jsx" />
+```
+
+Or in `tsconfig.json`:
+
+```json tsconfig.json
+{
+  "compilerOptions": {
+    "types": ["@uploadcare/file-uploader/types/jsx"]
+  }
+}
+```
+
+## API Routes Integration
+
+Handle uploaded files in API routes:
+
+<CodeGroup>
+
+```tsx app/api/upload/route.ts
+import { NextRequest, NextResponse } from 'next/server';
+
+export async function POST(request: NextRequest) {
+  const body = await request.json();
+  const { fileUuid, cdnUrl, fileName } = body;
+
+  // Save file information to your database
+  // Example: await db.files.create({ uuid: fileUuid, url: cdnUrl, name: fileName });
+
+  return NextResponse.json({
+    success: true,
+    fileUuid,
+  });
+}
+```
+
+```tsx pages/api/upload.ts
+import type { NextApiRequest, NextApiResponse } from 'next';
+
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ message: 'Method not allowed' });
+  }
+
+  const { fileUuid, cdnUrl, fileName } = req.body;
+
+  // Save file information to your database
+  // Example: await db.files.create({ uuid: fileUuid, url: cdnUrl, name: fileName });
+
+  res.status(200).json({
+    success: true,
+    fileUuid,
+  });
+}
+```
+
+</CodeGroup>
+
+## Advanced Upload Handler
+
+Create a component that sends upload information to your API:
+
+```tsx app/components/FileUploaderWithAPI.tsx
+'use client';
+
+import { useEffect, useRef } from 'react';
+import * as UC from '@uploadcare/file-uploader';
+import '@uploadcare/file-uploader/index.css';
+
+export default function FileUploaderWithAPI() {
+  const ctxProviderRef = useRef<any>(null);
+  const initialized = useRef(false);
+
+  useEffect(() => {
+    if (!initialized.current) {
+      UC.defineComponents(UC);
+      initialized.current = true;
+    }
+  }, []);
+
+  useEffect(() => {
+    const ctxProvider = ctxProviderRef.current;
+    if (!ctxProvider) return;
+
+    const handleUploadSuccess = async (e: CustomEvent) => {
+      const { uuid, cdnUrl, name } = e.detail;
+
+      try {
+        const response = await fetch('/api/upload', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            fileUuid: uuid,
+            cdnUrl,
+            fileName: name,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to save file info');
+        }
+
+        const data = await response.json();
+        console.log('File saved:', data);
+      } catch (error) {
+        console.error('Error saving file:', error);
+      }
+    };
+
+    ctxProvider.addEventListener('file-upload-success', handleUploadSuccess);
+
+    return () => {
+      ctxProvider.removeEventListener('file-upload-success', handleUploadSuccess);
+    };
+  }, []);
+
+  return (
+    <div>
+      <uc-config
+        ctx-name="my-uploader"
+        pubkey="YOUR_PUBLIC_KEY"
+      />
+      <uc-file-uploader-regular
+        ctx-name="my-uploader"
+      />
+      <uc-upload-ctx-provider
+        ref={ctxProviderRef}
+        ctx-name="my-uploader"
+      />
+    </div>
+  );
+}
+```
+
+## Server Actions (App Router)
+
+Use Next.js Server Actions to handle uploads:
+
+```tsx app/actions/upload.ts
+'use server';
+
+import { db } from '@/lib/db';
+
+export async function saveUploadedFile(data: {
+  uuid: string;
+  cdnUrl: string;
+  name: string;
+}) {
+  try {
+    await db.files.create({
+      data: {
+        uuid: data.uuid,
+        url: data.cdnUrl,
+        name: data.name,
+      },
+    });
+
+    return { success: true };
+  } catch (error) {
+    console.error('Failed to save file:', error);
+    return { success: false, error: 'Failed to save file' };
+  }
+}
+```
+
+Use the Server Action in your component:
+
+```tsx app/components/FileUploaderWithServerAction.tsx
+'use client';
+
+import { useEffect, useRef } from 'react';
+import * as UC from '@uploadcare/file-uploader';
+import '@uploadcare/file-uploader/index.css';
+import { saveUploadedFile } from '../actions/upload';
+
+export default function FileUploaderWithServerAction() {
+  const ctxProviderRef = useRef<any>(null);
+  const initialized = useRef(false);
+
+  useEffect(() => {
+    if (!initialized.current) {
+      UC.defineComponents(UC);
+      initialized.current = true;
+    }
+  }, []);
+
+  useEffect(() => {
+    const ctxProvider = ctxProviderRef.current;
+    if (!ctxProvider) return;
+
+    const handleUploadSuccess = async (e: CustomEvent) => {
+      const { uuid, cdnUrl, name } = e.detail;
+      const result = await saveUploadedFile({ uuid, cdnUrl, name });
+      
+      if (result.success) {
+        console.log('File saved successfully');
+      } else {
+        console.error('Failed to save file:', result.error);
+      }
+    };
+
+    ctxProvider.addEventListener('file-upload-success', handleUploadSuccess);
+
+    return () => {
+      ctxProvider.removeEventListener('file-upload-success', handleUploadSuccess);
+    };
+  }, []);
+
+  return (
+    <div>
+      <uc-config
+        ctx-name="my-uploader"
+        pubkey="YOUR_PUBLIC_KEY"
+      />
+      <uc-file-uploader-regular
+        ctx-name="my-uploader"
+      />
+      <uc-upload-ctx-provider
+        ref={ctxProviderRef}
+        ctx-name="my-uploader"
+      />
+    </div>
+  );
+}
+```
+
+## Environment Variables
+
+Store your Uploadcare public key in environment variables:
+
+```bash .env.local
+NEXT_PUBLIC_UPLOADCARE_PUBLIC_KEY=your_public_key_here
+```
+
+Use in your components:
+
+```tsx
+<uc-config
+  ctx-name="my-uploader"
+  pubkey={process.env.NEXT_PUBLIC_UPLOADCARE_PUBLIC_KEY}
+/>
+```
+
+<Warning>
+Always prefix client-side environment variables with `NEXT_PUBLIC_` in Next.js.
+</Warning>
+
+## Image Optimization
+
+Combine with Next.js Image component for optimized images:
+
+```tsx components/UploadedImage.tsx
+import Image from 'next/image';
+
+interface UploadedImageProps {
+  cdnUrl: string;
+  alt: string;
+}
+
+export default function UploadedImage({ cdnUrl, alt }: UploadedImageProps) {
+  return (
+    <Image
+      src={cdnUrl}
+      alt={alt}
+      width={800}
+      height={600}
+      loader={({ src, width, quality }) => {
+        // Use Uploadcare's transformation API
+        return `${src}-/resize/${width}x/-/quality/${quality || 75}/`;
+      }}
+    />
+  );
+}
+```
+
+## Best Practices for Next.js
+
+<Steps>
+  <Step title="Use Client Components">
+    Always mark components using Web Components with `'use client'` in the App Router.
+  </Step>
+  <Step title="Disable SSR for Pages Router">
+    Use dynamic imports with `{ ssr: false }` when using the Pages Router.
+  </Step>
+  <Step title="Initialize Once">
+    Call `defineComponents()` only once per component lifecycle.
+  </Step>
+  <Step title="Use Environment Variables">
+    Store sensitive configuration like API keys in environment variables.
+  </Step>
+  <Step title="Handle Loading States">
+    Show loading indicators while the uploader initializes on the client.
+  </Step>
+</Steps>
+
+## Troubleshooting
+
+### Hydration Errors
+
+If you encounter hydration errors, ensure your uploader component is either:
+- Marked as `'use client'` (App Router)
+- Loaded with `{ ssr: false }` (Pages Router)
+
+### Window is Not Defined
+
+This error occurs when Web Components code runs on the server. Use the approaches above to ensure client-side only rendering.
+
+### CSS Not Loading in Production
+
+Make sure your CSS import is in a component, not in a Server Component:
+
+```tsx
+'use client';
+import '@uploadcare/file-uploader/index.css';
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="React Integration" icon="react" href="/integrations/react">
+    Learn more about React-specific features
+  </Card>
+  <Card title="API Routes" icon="server" href="https://nextjs.org/docs/app/building-your-application/routing/route-handlers">
+    Next.js Route Handlers documentation
+  </Card>
+  <Card title="Live Examples" icon="code" href="https://github.com/uploadcare/file-uploader-examples/tree/main/examples/next-uploader">
+    View complete Next.js examples
+  </Card>
+  <Card title="Configuration" icon="gear" href="/api/configuration-options">
+    Explore all configuration options
+  </Card>
+</CardGroup>

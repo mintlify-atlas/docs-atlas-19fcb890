@@ -1,0 +1,507 @@
+---
+title: Secure Uploads and Signed Requests
+description: Implement secure uploads with signature-based authentication and token management
+---
+
+Secure uploads ensure that only authorized users can upload files to your Uploadcare project by requiring cryptographically signed requests. This prevents unauthorized uploads and protects your account from abuse.
+
+## Why Use Secure Uploads?
+
+Without secure uploads, anyone with your public key can upload files to your project. Secure uploads add an authentication layer that:
+
+- Prevents unauthorized uploads from malicious users
+- Protects against API abuse and quota exhaustion
+- Ensures uploads originate from your application
+- Provides granular control over upload permissions
+
+## Configuration Options
+
+There are three ways to configure secure uploads:
+
+### 1. Static Signature (Simple)
+
+Provide a pre-generated signature and expiration time:
+
+```html
+<uc-config 
+  pubkey="YOUR_PUBLIC_KEY"
+  secure-signature="YOUR_SIGNATURE"
+  secure-expire="1234567890">
+</uc-config>
+```
+
+**Limitations:**
+- Signature expires at the specified time
+- Must be regenerated manually after expiration
+- Less secure for long-running applications
+
+### 2. Dynamic Resolver (Recommended)
+
+Use a resolver function to fetch signatures on-demand:
+
+```html
+<uc-config id="config" pubkey="YOUR_PUBLIC_KEY"></uc-config>
+
+<script>
+  const config = document.getElementById('config');
+  
+  config.secureUploadsSignatureResolver = async () => {
+    const response = await fetch('/api/uploadcare-signature');
+    const data = await response.json();
+    
+    return {
+      secureSignature: data.signature,
+      secureExpire: data.expire,
+    };
+  };
+</script>
+```
+
+### 3. Combined Approach
+
+Provide a static signature initially and use a resolver for renewal:
+
+```typescript
+config.secureSignature = 'initial_signature';
+config.secureExpire = '1234567890';
+config.secureUploadsSignatureResolver = async () => {
+  // Fetches new signature when needed
+  const response = await fetch('/api/uploadcare-signature');
+  return await response.json();
+};
+```
+
+<Warning>
+If both static and resolver are provided, the resolver takes precedence. A warning will be logged to the console.
+</Warning>
+
+## Secure Uploads Manager
+
+The `SecureUploadsManager` handles signature management automatically:
+
+```typescript
+// Source: src/abstract/managers/SecureUploadsManager.ts
+export class SecureUploadsManager extends SharedInstance {
+  private _secureToken: SecureUploadsSignatureAndExpire | null = null;
+
+  public async getSecureToken(): Promise<SecureUploadsSignatureAndExpire | null> {
+    const { 
+      secureSignature, 
+      secureExpire, 
+      secureUploadsSignatureResolver, 
+      secureUploadsExpireThreshold 
+    } = this._cfg;
+
+    // Warn if both are provided
+    if ((secureSignature || secureExpire) && secureUploadsSignatureResolver) {
+      console.warn(
+        'Both secureSignature/secureExpire and secureUploadsSignatureResolver are set. ' +
+        'secureUploadsSignatureResolver will be used.'
+      );
+    }
+
+    // Use resolver if available
+    if (secureUploadsSignatureResolver) {
+      // Check if token is expired
+      if (!this._secureToken || 
+          isSecureTokenExpired(this._secureToken, { threshold: secureUploadsExpireThreshold })) {
+        
+        try {
+          const result = await secureUploadsSignatureResolver();
+          
+          if (!result) {
+            this._debugPrint('Secure signature resolver returned nothing.');
+            this._secureToken = null;
+          } else if (!result.secureSignature || !result.secureExpire) {
+            console.error('Secure signature resolver returned an invalid result:', result);
+          } else {
+            this._debugPrint('Secure signature resolved:', result);
+            this._secureToken = result;
+          }
+        } catch (err) {
+          console.error('Secure signature resolving failed.', err);
+        }
+      }
+
+      return this._secureToken;
+    }
+
+    // Fall back to static signature
+    if (secureSignature && secureExpire) {
+      return { secureSignature, secureExpire };
+    }
+
+    return null;
+  }
+}
+```
+
+## Expiration Handling
+
+The library checks if a signature is expired using a configurable threshold:
+
+```typescript
+// Source: src/utils/isSecureTokenExpired.ts
+export const isSecureTokenExpired = (
+  secureToken: SecureUploadsSignatureAndExpire,
+  { threshold }: { threshold?: number },
+): boolean => {
+  const { secureExpire } = secureToken;
+  const nowUnix = Math.floor(Date.now() / 1000);
+  const expireUnix = Number(secureExpire);
+  const thresholdUnix = Math.floor((threshold || 0) / 1000);
+  
+  return nowUnix + thresholdUnix >= expireUnix;
+};
+```
+
+### Expiration Threshold
+
+The threshold determines how early to refresh the signature before it actually expires:
+
+```html
+<!-- Refresh signature 60 seconds before expiration -->
+<uc-config 
+  secure-uploads-expire-threshold="60000">
+</uc-config>
+```
+
+**Benefits:**
+- Prevents upload failures due to expired signatures
+- Provides time buffer for token refresh
+- Reduces race conditions during expiration
+
+## Backend Implementation
+
+You must implement a backend endpoint to generate signatures:
+
+<Tabs>
+  <Tab title="Node.js">
+    ```javascript
+    const express = require('express');
+    const crypto = require('crypto');
+    const app = express();
+
+    const UPLOADCARE_SECRET = process.env.UPLOADCARE_SECRET;
+
+    app.get('/api/uploadcare-signature', (req, res) => {
+      // Set expiration time (e.g., 1 hour from now)
+      const expire = Math.floor(Date.now() / 1000) + 3600;
+      
+      // Generate signature
+      const signature = crypto
+        .createHmac('sha256', UPLOADCARE_SECRET)
+        .update(expire.toString())
+        .digest('hex');
+      
+      res.json({
+        secureSignature: signature,
+        secureExpire: expire.toString(),
+      });
+    });
+
+    app.listen(3000);
+    ```
+  </Tab>
+  
+  <Tab title="Python">
+    ```python
+    from flask import Flask, jsonify
+    import hmac
+    import hashlib
+    import time
+    import os
+
+    app = Flask(__name__)
+    UPLOADCARE_SECRET = os.environ['UPLOADCARE_SECRET']
+
+    @app.route('/api/uploadcare-signature')
+    def get_signature():
+        # Set expiration time (e.g., 1 hour from now)
+        expire = int(time.time()) + 3600
+        
+        # Generate signature
+        signature = hmac.new(
+            UPLOADCARE_SECRET.encode(),
+            str(expire).encode(),
+            hashlib.sha256
+        ).hexdigest()
+        
+        return jsonify({
+            'secureSignature': signature,
+            'secureExpire': str(expire)
+        })
+
+    if __name__ == '__main__':
+        app.run()
+    ```
+  </Tab>
+  
+  <Tab title="PHP">
+    ```php
+    <?php
+    header('Content-Type: application/json');
+
+    $secret = getenv('UPLOADCARE_SECRET');
+
+    // Set expiration time (e.g., 1 hour from now)
+    $expire = time() + 3600;
+
+    // Generate signature
+    $signature = hash_hmac('sha256', (string)$expire, $secret);
+
+    echo json_encode([
+        'secureSignature' => $signature,
+        'secureExpire' => (string)$expire
+    ]);
+    ```
+  </Tab>
+  
+  <Tab title="Ruby">
+    ```ruby
+    require 'sinatra'
+    require 'json'
+    require 'openssl'
+
+    UPLOADCARE_SECRET = ENV['UPLOADCARE_SECRET']
+
+    get '/api/uploadcare-signature' do
+      content_type :json
+      
+      # Set expiration time (e.g., 1 hour from now)
+      expire = Time.now.to_i + 3600
+      
+      # Generate signature
+      signature = OpenSSL::HMAC.hexdigest(
+        'SHA256',
+        UPLOADCARE_SECRET,
+        expire.to_s
+      )
+      
+      {
+        secureSignature: signature,
+        secureExpire: expire.to_s
+      }.to_json
+    end
+    ```
+  </Tab>
+</Tabs>
+
+<Warning>
+Never expose your secret key to the client. Always generate signatures on the server.
+</Warning>
+
+## Complete Example
+
+```html
+<!DOCTYPE html>
+<html>
+<head>
+  <script type="module">
+    import * as UC from 'https://cdn.jsdelivr.net/npm/@uploadcare/file-uploader@latest/web/file-uploader.min.js';
+    UC.defineComponents(UC);
+    
+    window.addEventListener('DOMContentLoaded', () => {
+      const config = document.getElementById('config');
+      
+      // Configure secure uploads
+      config.secureUploadsSignatureResolver = async () => {
+        try {
+          const response = await fetch('/api/uploadcare-signature');
+          
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+          }
+          
+          const data = await response.json();
+          
+          console.log('Signature obtained, expires:', 
+            new Date(Number(data.secureExpire) * 1000).toISOString()
+          );
+          
+          return {
+            secureSignature: data.secureSignature,
+            secureExpire: data.secureExpire,
+          };
+        } catch (error) {
+          console.error('Failed to get signature:', error);
+          
+          // Show error to user
+          alert('Failed to initialize secure uploads. Please try again.');
+          
+          return null;
+        }
+      };
+      
+      // Set expiration threshold to 60 seconds
+      config.secureUploadsExpireThreshold = 60000;
+      
+      // Monitor upload events
+      const provider = document.getElementById('provider');
+      
+      provider.addEventListener('file-upload-failed', (event) => {
+        const file = event.detail;
+        console.error('Upload failed:', file.errors);
+        
+        // Check for signature-related errors
+        const signatureError = file.errors.find(
+          e => e.type === 'UPLOAD_ERROR' && 
+               e.message.includes('signature')
+        );
+        
+        if (signatureError) {
+          console.error('Signature error detected:', signatureError);
+        }
+      });
+    });
+  </script>
+</head>
+<body>
+  <h1>Secure Upload Example</h1>
+  
+  <uc-file-uploader-regular ctx-name="uploader"></uc-file-uploader-regular>
+  
+  <uc-config 
+    id="config"
+    ctx-name="uploader"
+    pubkey="YOUR_PUBLIC_KEY"
+    multiple="true"
+  ></uc-config>
+  
+  <uc-upload-ctx-provider 
+    id="provider"
+    ctx-name="uploader">
+  </uc-upload-ctx-provider>
+</body>
+</html>
+```
+
+## Debugging
+
+Enable debug mode to see signature resolution logs:
+
+```html
+<uc-config debug="true"></uc-config>
+```
+
+Logs will show:
+- When signatures are resolved
+- Expiration times
+- Errors during resolution
+
+```typescript
+// Source: src/abstract/managers/SecureUploadsManager.ts:18-36
+if (!this._secureToken) {
+  this._debugPrint('Secure signature is not set yet.');
+} else {
+  this._debugPrint('Secure signature is expired. Resolving a new one...');
+}
+
+// After resolution
+this._debugPrint('Secure signature resolved:', result);
+this._debugPrint(
+  'Secure signature will expire in',
+  new Date(Number(result.secureExpire) * 1000).toISOString(),
+);
+```
+
+## Error Handling
+
+Handle signature resolution failures gracefully:
+
+```typescript
+config.secureUploadsSignatureResolver = async () => {
+  try {
+    const response = await fetch('/api/uploadcare-signature', {
+      headers: {
+        'Authorization': `Bearer ${userToken}`,
+      },
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Server returned ${response.status}`);
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Signature resolution failed:', error);
+    
+    // Notify user
+    showErrorMessage('Unable to initialize secure uploads');
+    
+    // Optionally retry
+    if (retryCount < 3) {
+      await delay(1000);
+      return retrySignatureResolution();
+    }
+    
+    return null;
+  }
+};
+```
+
+## API Reference
+
+### Configuration Properties
+
+| Property | Type | Default | Description |
+|----------|------|---------|-------------|
+| `secureSignature` | `string` | `''` | Static upload signature |
+| `secureExpire` | `string` | `''` | Signature expiration timestamp |
+| `secureUploadsSignatureResolver` | `SecureUploadsSignatureResolver` | `null` | Dynamic signature resolver |
+| `secureUploadsExpireThreshold` | `number` | (default) | Time before expiration to refresh (ms) |
+
+### Types
+
+```typescript
+// Source: src/types/exported.ts:35-36
+export type SecureUploadsSignatureAndExpire = {
+  secureSignature: string;
+  secureExpire: string;
+};
+
+export type SecureUploadsSignatureResolver = () => 
+  Promise<SecureUploadsSignatureAndExpire | null>;
+```
+
+## Best Practices
+
+<Tabs>
+  <Tab title="Security">
+    - Never expose your secret key to the client
+    - Generate signatures on your backend server
+    - Use HTTPS for signature endpoints
+    - Implement rate limiting on signature endpoints
+    - Set reasonable expiration times (e.g., 1-24 hours)
+    - Validate user authentication before generating signatures
+  </Tab>
+  
+  <Tab title="Reliability">
+    - Use `secureUploadsSignatureResolver` for automatic renewal
+    - Set appropriate `secureUploadsExpireThreshold`
+    - Implement retry logic for signature resolution
+    - Handle network failures gracefully
+    - Cache signatures to reduce server load
+  </Tab>
+  
+  <Tab title="Performance">
+    - Avoid fetching signatures too frequently
+    - Use longer expiration times for better UX
+    - Implement signature caching on the client
+    - Consider using JWT tokens for user authentication
+  </Tab>
+</Tabs>
+
+<Note>
+Signatures are refreshed automatically when expired or near expiration. The threshold ensures uploads don't fail due to expired tokens.
+</Note>
+
+<Warning>
+If signature resolution fails, uploads will not proceed. Always implement proper error handling and user feedback.
+</Warning>
+
+## Next Steps
+
+- Learn about [Validation](/advanced/validation) to restrict file types and sizes
+- Explore [Events](/advanced/events) to track upload progress
+- Read about [Secure Delivery](/advanced/secure-uploads) for protected file access

@@ -1,122 +1,123 @@
 {
   "$schema": "https://mintlify.com/docs.json",
-  "theme": "mint",
-  "name": "Mint Starter Kit",
+  "name": "Uploadcare File Uploader",
+  "theme": "palm",
   "colors": {
-    "primary": "#16A34A",
-    "light": "#07C983",
-    "dark": "#15803D"
+    "primary": "#040404",
+    "light": "#fbd338",
+    "dark": "#fbe483"
   },
-  "favicon": "/favicon.svg",
+  "favicon": "/favicon.png",
+  "logo": {
+    "light": "https://media.brand.dev/800e989a-375b-4715-a3ec-1da01a50259d.svg",
+    "dark": "https://media.brand.dev/800e989a-375b-4715-a3ec-1da01a50259d.svg"
+  },
+  "navbar": {
+    "primary": {
+      "type": "github",
+      "href": "https://github.com/uploadcare/file-uploader"
+    }
+  },
+  "footer": {
+    "socials": {
+      "github": "https://github.com/uploadcare/file-uploader",
+      "twitter": "https://twitter.com/Uploadcare",
+      "discord": "https://discord.gg/mKWRgRsVz8"
+    }
+  },
   "navigation": {
     "tabs": [
       {
-        "tab": "Guides",
+        "tab": "Documentation",
         "groups": [
           {
-            "group": "Getting started",
+            "group": "Get Started",
             "pages": [
-              "index",
-              "quickstart",
-              "development"
+              "introduction",
+              "installation",
+              "quickstart"
             ]
           },
           {
-            "group": "Customization",
+            "group": "Core Concepts",
             "pages": [
-              "essentials/settings",
-              "essentials/navigation"
+              "concepts/configuration",
+              "concepts/components",
+              "concepts/solutions"
             ]
           },
           {
-            "group": "Writing content",
+            "group": "Solutions",
             "pages": [
-              "essentials/markdown",
-              "essentials/code",
-              "essentials/images",
-              "essentials/reusable-snippets"
+              "solutions/file-uploader-regular",
+              "solutions/file-uploader-inline",
+              "solutions/file-uploader-minimal",
+              "solutions/cloud-image-editor"
             ]
           },
           {
-            "group": "AI tools",
+            "group": "Components",
             "pages": [
-              "ai-tools/cursor",
-              "ai-tools/claude-code",
-              "ai-tools/windsurf"
+              "components/config",
+              "components/upload-ctx-provider",
+              "components/drop-area",
+              "components/source-list",
+              "components/upload-list",
+              "components/camera-source",
+              "components/url-source"
+            ]
+          },
+          {
+            "group": "Advanced",
+            "pages": [
+              "advanced/validation",
+              "advanced/localization",
+              "advanced/styling",
+              "advanced/events",
+              "advanced/secure-uploads"
+            ]
+          },
+          {
+            "group": "Framework Integration",
+            "pages": [
+              "integrations/react",
+              "integrations/nextjs",
+              "integrations/vue",
+              "integrations/angular",
+              "integrations/svelte",
+              "integrations/javascript"
             ]
           }
         ]
       },
       {
-        "tab": "API reference",
+        "tab": "API Reference",
         "groups": [
           {
-            "group": "API documentation",
+            "group": "Configuration",
             "pages": [
-              "api-reference/introduction"
+              "api/configuration-options"
             ]
           },
           {
-            "group": "Endpoint examples",
+            "group": "Types",
             "pages": [
-              "api-reference/endpoint/get",
-              "api-reference/endpoint/create",
-              "api-reference/endpoint/delete",
-              "api-reference/endpoint/webhook"
+              "api/types/config-type",
+              "api/types/output-file-entry",
+              "api/types/output-collection-state",
+              "api/types/events"
+            ]
+          },
+          {
+            "group": "API",
+            "pages": [
+              "api/uploader-public-api",
+              "api/define-components",
+              "api/define-locale"
             ]
           }
         ]
       }
-    ],
-    "global": {
-      "anchors": [
-        {
-          "anchor": "Documentation",
-          "href": "https://mintlify.com/docs",
-          "icon": "book-open-cover"
-        },
-        {
-          "anchor": "Blog",
-          "href": "https://mintlify.com/blog",
-          "icon": "newspaper"
-        }
-      ]
-    }
-  },
-  "logo": {
-    "light": "/logo/light.svg",
-    "dark": "/logo/dark.svg"
-  },
-  "navbar": {
-    "links": [
-      {
-        "label": "Support",
-        "href": "mailto:hi@mintlify.com"
-      }
-    ],
-    "primary": {
-      "type": "button",
-      "label": "Dashboard",
-      "href": "https://dashboard.mintlify.com"
-    }
-  },
-  "contextual": {
-    "options": [
-     "copy",
-     "view",
-     "chatgpt",
-     "claude",
-     "perplexity",
-     "mcp",
-     "cursor",
-     "vscode"
-   ]
-  },
-  "footer": {
-    "socials": {
-      "x": "https://x.com/mintlify",
-      "github": "https://github.com/mintlify",
-      "linkedin": "https://linkedin.com/company/mintlify"
-    }
+    ]
   }
 }

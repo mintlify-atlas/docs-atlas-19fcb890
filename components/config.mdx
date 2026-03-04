@@ -1,0 +1,339 @@
+---
+title: Config
+description: Configure the File Uploader behavior and appearance through attributes or properties
+---
+
+The `Config` component is the central configuration hub for Uploadcare File Uploader. It accepts configuration options as HTML attributes or DOM properties and synchronizes them with the shared state across all components.
+
+## Overview
+
+The Config component extends `LitBlock` and provides a reactive configuration system. All configuration values can be set via:
+- HTML attributes (kebab-case or lowercase)
+- DOM properties (camelCase)
+- JavaScript API
+
+Changes to configuration are automatically propagated to all connected components in the same context.
+
+## Basic Usage
+
+```html
+<uc-config 
+  ctx-name="my-uploader"
+  pubkey="YOUR_PUBLIC_KEY"
+  multiple
+  max-local-file-size-bytes="52428800"
+  source-list="local, url, camera"
+></uc-config>
+```
+
+## Configuration via Properties
+
+```javascript
+const config = document.querySelector('uc-config');
+
+// Set properties programmatically
+config.pubkey = 'YOUR_PUBLIC_KEY';
+config.multiple = true;
+config.multipleMax = 10;
+config.sourceList = 'local, url, camera, dropbox';
+```
+
+## Core Properties
+
+### Upload Settings
+
+<ParamField path="pubkey" type="string" required>
+  Your Uploadcare public key. Required for the uploader to work.
+  
+  ```html
+  <uc-config pubkey="demopublickey"></uc-config>
+  ```
+</ParamField>
+
+<ParamField path="multiple" type="boolean" default="true">
+  Allow multiple file uploads.
+  
+  ```html
+  <uc-config multiple></uc-config>
+  ```
+</ParamField>
+
+<ParamField path="multipleMin" type="number" default="0">
+  Minimum number of files required.
+  
+  ```html
+  <uc-config multiple-min="1"></uc-config>
+  ```
+</ParamField>
+
+<ParamField path="multipleMax" type="number" default="Infinity">
+  Maximum number of files allowed.
+  
+  ```html
+  <uc-config multiple-max="5"></uc-config>
+  ```
+</ParamField>
+
+<ParamField path="confirmUpload" type="boolean" default="false">
+  Require manual confirmation before uploading files.
+  
+  ```html
+  <uc-config confirm-upload></uc-config>
+  ```
+</ParamField>
+
+### File Restrictions
+
+<ParamField path="imgOnly" type="boolean" default="false">
+  Accept only image files.
+  
+  ```html
+  <uc-config img-only></uc-config>
+  ```
+</ParamField>
+
+<ParamField path="accept" type="string" default="">
+  Specify accepted file types (MIME types or extensions).
+  
+  ```html
+  <uc-config accept="image/*,.pdf"></uc-config>
+  ```
+</ParamField>
+
+<ParamField path="maxLocalFileSizeBytes" type="number" default="0">
+  Maximum file size in bytes. 0 means no limit.
+  
+  ```html
+  <uc-config max-local-file-size-bytes="52428800"></uc-config>
+  ```
+</ParamField>
+
+### Upload Sources
+
+<ParamField path="sourceList" type="string" default="'local, url, camera, dropbox, gdrive'">
+  Comma-separated list of available upload sources.
+  
+  Available sources: `local`, `url`, `camera`, `dropbox`, `gdrive`, `gphotos`, `instagram`, `facebook`, `onedrive`, `box`, `vk`, `evernote`, `flickr`, `unsplash`
+  
+  ```html
+  <uc-config source-list="local, url, camera"></uc-config>
+  ```
+</ParamField>
+
+### Camera Settings
+
+<ParamField path="cameraMirror" type="boolean" default="false">
+  Mirror the camera preview.
+  
+  ```html
+  <uc-config camera-mirror></uc-config>
+  ```
+</ParamField>
+
+<ParamField path="cameraModes" type="string" default="'photo, video'">
+  Available camera modes (comma-separated).
+  
+  ```html
+  <uc-config camera-modes="photo, video"></uc-config>
+  ```
+</ParamField>
+
+<ParamField path="enableAudioRecording" type="boolean" default="true">
+  Enable audio recording in video mode.
+  
+  ```html
+  <uc-config enable-audio-recording="false"></uc-config>
+  ```
+</ParamField>
+
+<ParamField path="maxVideoRecordingDuration" type="number" default="null">
+  Maximum video recording duration in seconds. `null` means no limit.
+  
+  ```html
+  <uc-config max-video-recording-duration="60"></uc-config>
+  ```
+</ParamField>
+
+### Storage & CDN
+
+<ParamField path="store" type="string" default="'auto'">
+  File storage mode. Can be `'auto'`, `'1'` (store), or `'0'` (don't store).
+  
+  ```html
+  <uc-config store="1"></uc-config>
+  ```
+</ParamField>
+
+<ParamField path="cdnCname" type="string" default="'https://ucarecdn.com'">
+  Custom CDN CNAME for file delivery.
+  
+  ```html
+  <uc-config cdn-cname="https://cdn.example.com"></uc-config>
+  ```
+</ParamField>
+
+### UI Settings
+
+<ParamField path="modalScrollLock" type="boolean" default="true">
+  Lock body scroll when modal is open.
+  
+  ```html
+  <uc-config modal-scroll-lock="false"></uc-config>
+  ```
+</ParamField>
+
+<ParamField path="showEmptyList" type="boolean" default="false">
+  Show upload list even when empty.
+  
+  ```html
+  <uc-config show-empty-list></uc-config>
+  ```
+</ParamField>
+
+<ParamField path="filesViewMode" type="string" default="'list'">
+  Display mode for files. Can be `'list'` or `'grid'`.
+  
+  ```html
+  <uc-config files-view-mode="grid"></uc-config>
+  ```
+</ParamField>
+
+### Localization
+
+<ParamField path="localeName" type="string" default="'en'">
+  Locale code for UI text.
+  
+  ```html
+  <uc-config locale-name="es"></uc-config>
+  ```
+</ParamField>
+
+### Advanced Settings
+
+<ParamField path="debug" type="boolean" default="false">
+  Enable debug mode with console logging.
+  
+  ```html
+  <uc-config debug></uc-config>
+  ```
+</ParamField>
+
+<ParamField path="groupOutput" type="boolean" default="false">
+  Group uploaded files into a single CDN group.
+  
+  ```html
+  <uc-config group-output></uc-config>
+  ```
+</ParamField>
+
+## Complex Properties
+
+Some configuration options cannot be set as attributes and must be set via JavaScript properties:
+
+### metadata
+
+Custom metadata to attach to uploaded files.
+
+```javascript
+config.metadata = {
+  userId: '12345',
+  sessionId: 'abc-def',
+};
+```
+
+### fileValidators
+
+Array of custom validation functions for files.
+
+```javascript
+config.fileValidators = [
+  (fileInfo) => {
+    if (fileInfo.size > 10 * 1024 * 1024) {
+      return 'File is too large';
+    }
+  },
+];
+```
+
+### collectionValidators
+
+Array of custom validation functions for the entire file collection.
+
+```javascript
+config.collectionValidators = [
+  (collection) => {
+    if (collection.length === 0) {
+      return 'Please select at least one file';
+    }
+  },
+];
+```
+
+### secureUploadsSignatureResolver
+
+Function to resolve secure upload signatures.
+
+```javascript
+config.secureUploadsSignatureResolver = async (fileInfo) => {
+  const response = await fetch('/api/upload-signature', {
+    method: 'POST',
+    body: JSON.stringify({ filename: fileInfo.name }),
+  });
+  const data = await response.json();
+  return data.signature;
+};
+```
+
+### mediaRecorderOptions
+
+Options for the MediaRecorder API when recording video.
+
+```javascript
+config.mediaRecorderOptions = {
+  mimeType: 'video/webm;codecs=vp9',
+  videoBitsPerSecond: 2500000,
+};
+```
+
+## Context Sharing
+
+The `ctx-name` attribute connects Config with other components:
+
+```html
+<uc-config ctx-name="my-uploader" pubkey="demopublickey"></uc-config>
+<uc-upload-ctx-provider ctx-name="my-uploader"></uc-upload-ctx-provider>
+<uc-drop-area ctx-name="my-uploader"></uc-drop-area>
+```
+
+All components with the same `ctx-name` share the same configuration and state.
+
+## Attribute Mapping
+
+Attributes can be written in different formats:
+
+- **Kebab-case**: `max-local-file-size-bytes="1000000"`
+- **Lowercase**: `maxlocalfilesizebytes="1000000"`
+- **Property (camelCase)**: `element.maxLocalFileSizeBytes = 1000000`
+
+## Reactive Updates
+
+Configuration changes trigger automatic updates across the uploader:
+
+```javascript
+const config = document.querySelector('uc-config');
+
+// This change will immediately affect all components
+config.sourceList = 'local, url';
+```
+
+## Source Code Reference
+
+Implementation: `/workspace/source/src/blocks/Config/Config.ts:55`
+
+Initial configuration values: `/workspace/source/src/blocks/Config/initialConfig.ts:10`
+
+## See Also
+
+- [UploadCtxProvider](/components/upload-ctx-provider) - Context provider for upload functionality
+- [DropArea](/components/drop-area) - File drop zone component
+- [SourceList](/components/source-list) - Upload source selector

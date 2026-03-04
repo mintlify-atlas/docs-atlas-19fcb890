@@ -1,0 +1,197 @@
+---
+title: 'FileUploaderRegular'
+description: 'Full-featured file uploader with modal dialogs and complete upload workflow'
+icon: 'upload'
+---
+
+## Overview
+
+The `FileUploaderRegular` component provides a complete file upload solution with a modal-based interface. It includes an upload button that opens a modal dialog with drag-and-drop functionality, multiple upload sources, and a dedicated upload list view.
+
+## When to use
+
+Use `FileUploaderRegular` when you need:
+
+- A traditional file upload button with modal workflows
+- Clear separation between file selection and upload management
+- Multiple upload sources (device, camera, URL, external services)
+- Built-in modal dialogs for different upload activities
+- A polished, production-ready file upload experience
+
+## Basic usage
+
+<CodeGroup>
+
+```html CDN
+<script type="module">
+  import * as UC from 'https://cdn.jsdelivr.net/npm/@uploadcare/file-uploader@1/web/uc-file-uploader-regular.min.js';
+  UC.defineComponents(UC);
+</script>
+
+<link
+  rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/@uploadcare/file-uploader@1/web/uc-file-uploader-regular.min.css"
+/>
+
+<uc-file-uploader-regular ctx-name="my-uploader"></uc-file-uploader-regular>
+<uc-config ctx-name="my-uploader" pubkey="YOUR_PUBLIC_KEY"></uc-config>
+<uc-upload-ctx-provider ctx-name="my-uploader"></uc-upload-ctx-provider>
+```
+
+```javascript NPM
+import * as UC from '@uploadcare/file-uploader';
+import '@uploadcare/file-uploader/web/uc-file-uploader-regular.min.css';
+
+UC.defineComponents(UC);
+```
+
+```html Markup
+<uc-file-uploader-regular ctx-name="my-uploader"></uc-file-uploader-regular>
+<uc-config ctx-name="my-uploader" pubkey="YOUR_PUBLIC_KEY"></uc-config>
+<uc-upload-ctx-provider ctx-name="my-uploader"></uc-upload-ctx-provider>
+```
+
+</CodeGroup>
+
+## Features
+
+### Upload button
+
+The component renders an "Upload files" button that triggers the modal workflow. The button is visible by default but can be hidden using the `headless` attribute.
+
+```html
+<uc-file-uploader-regular ctx-name="my-uploader" headless></uc-file-uploader-regular>
+```
+
+### Modal dialogs
+
+FileUploaderRegular includes several modal dialogs for different activities:
+
+- **Start From** - Main file selection interface with drag-and-drop and source list
+- **Upload List** - Shows uploaded files with progress and management options
+- **Camera** - Capture photos or videos from device camera
+- **URL** - Import files from external URLs
+- **External Sources** - Connect to cloud storage services (Dropbox, Google Drive)
+- **Cloud Image Editor** - Edit images before or after upload
+
+### Upload sources
+
+The default configuration includes:
+
+- Local device files
+- Drag and drop
+- Camera capture
+- URL import
+- External services (Dropbox, Google Drive)
+
+## Attributes
+
+### `ctx-name`
+
+<ParamField path="ctx-name" type="string" required>
+  The context name that links the uploader with its configuration. Must match the `ctx-name` in `uc-config` and `uc-upload-ctx-provider`.
+</ParamField>
+
+### `headless`
+
+<ParamField path="headless" type="boolean" default="false">
+  Hides the default upload button. Use this when you want to trigger the upload flow programmatically or with a custom button.
+</ParamField>
+
+## Form integration
+
+Integrate FileUploaderRegular with HTML forms using the `uc-form-input` component:
+
+```html
+<form>
+  <uc-file-uploader-regular ctx-name="my-uploader">
+    <uc-form-input ctx-name="my-uploader"></uc-form-input>
+  </uc-file-uploader-regular>
+  <button type="submit">Submit</button>
+</form>
+```
+
+## Configuration options
+
+Configure the uploader behavior through the `uc-config` component:
+
+<Tabs>
+  <Tab title="Multiple files">
+    ```html
+    <uc-config
+      ctx-name="my-uploader"
+      pubkey="YOUR_PUBLIC_KEY"
+      multiple
+      multiple-min="1"
+      multiple-max="10"
+    ></uc-config>
+    ```
+  </Tab>
+  <Tab title="Image only">
+    ```html
+    <uc-config
+      ctx-name="my-uploader"
+      pubkey="YOUR_PUBLIC_KEY"
+      img-only
+    ></uc-config>
+    ```
+  </Tab>
+  <Tab title="Custom sources">
+    ```html
+    <uc-config
+      ctx-name="my-uploader"
+      pubkey="YOUR_PUBLIC_KEY"
+      source-list="local, url, camera"
+    ></uc-config>
+    ```
+  </Tab>
+</Tabs>
+
+## Styling
+
+Customize the appearance using CSS custom properties or by applying the light/dark theme:
+
+```html
+<uc-file-uploader-regular class="uc-light" ctx-name="my-uploader"></uc-file-uploader-regular>
+```
+
+```html
+<uc-file-uploader-regular class="uc-dark" ctx-name="my-uploader"></uc-file-uploader-regular>
+```
+
+<Note>
+  The component automatically adapts to the system color scheme unless you explicitly set a theme class.
+</Note>
+
+## Events
+
+Listen to upload events to integrate with your application logic:
+
+```javascript
+const uploader = document.querySelector('uc-file-uploader-regular');
+
+uploader.addEventListener('file-upload-success', (e) => {
+  console.log('File uploaded:', e.detail);
+});
+
+uploader.addEventListener('file-upload-failed', (e) => {
+  console.error('Upload failed:', e.detail);
+});
+```
+
+## Comparison with other solutions
+
+<CardGroup cols={2}>
+  <Card title="FileUploaderInline" icon="table" href="/solutions/file-uploader-inline">
+    Inline interface without modals, embedded directly in your page
+  </Card>
+  <Card title="FileUploaderMinimal" icon="minimize" href="/solutions/file-uploader-minimal">
+    Compact uploader with minimal UI, perfect for tight spaces
+  </Card>
+</CardGroup>
+
+## Related components
+
+- [Config](/components/config) - Configure uploader behavior
+- [UploadCtxProvider](/components/upload-ctx-provider) - Manage upload context
+- [CloudImageEditor](/solutions/cloud-image-editor) - Standalone image editor

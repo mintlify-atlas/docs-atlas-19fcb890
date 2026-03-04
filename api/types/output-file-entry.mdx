@@ -1,0 +1,212 @@
+---
+title: "OutputFileEntry"
+description: "File entry type representing an uploaded file"
+---
+
+The `OutputFileEntry` type represents a file in the upload collection. It contains file metadata, upload status, and the result of the upload operation.
+
+## Overview
+
+Each file added to the uploader is represented by an `OutputFileEntry` object that tracks its entire lifecycle from addition through upload completion or failure.
+
+## Type Definition
+
+```typescript
+export type OutputFileEntry<TStatus extends OutputFileStatus = OutputFileStatus> = {
+  // Status
+  status: TStatus;
+  internalId: string;
+  
+  // File information
+  name: string;
+  size: number;
+  isImage: boolean;
+  mimeType: string;
+  metadata: Metadata | null;
+  
+  // Upload source
+  file: File | Blob | null;
+  externalUrl: string | null;
+  source: SourceTypes | null;
+  
+  // Upload progress
+  uploadProgress: number;
+  
+  // Upload result
+  fullPath: string | null;
+  
+  // Validation
+  isValidationPending: boolean;
+} & (StatusSpecificFields);
+```
+
+## Status Values
+
+```typescript
+type OutputFileStatus = 'idle' | 'uploading' | 'success' | 'failed' | 'removed';
+```
+
+### Idle State
+File added but not yet uploaded:
+
+```typescript
+{
+  status: 'idle';
+  fileInfo: null;
+  uuid: null;
+  cdnUrl: null;
+  isUploading: false;
+  isSuccess: false;
+  isFailed: false;
+  isRemoved: false;
+  errors: [];
+}
+```
+
+### Uploading State
+File is currently being uploaded:
+
+```typescript
+{
+  status: 'uploading';
+  uploadProgress: 0-100;
+  fileInfo: null;
+  uuid: null;
+  cdnUrl: null;
+  isUploading: true;
+  errors: [];
+}
+```
+
+### Success State
+File successfully uploaded:
+
+```typescript
+{
+  status: 'success';
+  fileInfo: UploadcareFile;
+  uuid: string;
+  cdnUrl: string;
+  cdnUrlModifiers: string;
+  isSuccess: true;
+  errors: [];
+}
+```
+
+### Failed State
+Upload failed:
+
+```typescript
+{
+  status: 'failed';
+  fileInfo: UploadcareFile | null;
+  uuid: string | null;
+  cdnUrl: string | null;
+  isFailed: true;
+  errors: OutputError<OutputFileErrorType>[];
+}
+```
+
+## Common Properties
+
+<ParamField path="status" type="OutputFileStatus" required>
+  Current status of the file (idle, uploading, success, failed, removed)
+</ParamField>
+
+<ParamField path="internalId" type="string" required>
+  Unique internal identifier for this file entry
+</ParamField>
+
+<ParamField path="name" type="string" required>
+  Original file name
+</ParamField>
+
+<ParamField path="size" type="number" required>
+  File size in bytes
+</ParamField>
+
+<ParamField path="isImage" type="boolean" required>
+  Whether the file is an image
+</ParamField>
+
+<ParamField path="mimeType" type="string" required>
+  MIME type of the file (e.g., "image/jpeg")
+</ParamField>
+
+<ParamField path="uploadProgress" type="number" required>
+  Upload progress from 0 to 100
+</ParamField>
+
+<ParamField path="uuid" type="string | null">
+  Uploadcare file UUID (available after successful upload)
+</ParamField>
+
+<ParamField path="cdnUrl" type="string | null">
+  Full CDN URL for accessing the file
+</ParamField>
+
+<ParamField path="cdnUrlModifiers" type="string | null">
+  URL modifiers applied to the CDN URL (for image transformations)
+</ParamField>
+
+## Usage Example
+
+```typescript
+import type { OutputFileEntry } from '@uploadcare/file-uploader';
+
+// Listen for file upload success
+const uploaderCtx = document.querySelector('uc-upload-ctx-provider');
+
+uploaderCtx.addEventListener('file-upload-success', (e) => {
+  const entry: OutputFileEntry = e.detail;
+  
+  console.log('File uploaded:', entry.name);
+  console.log('CDN URL:', entry.cdnUrl);
+  console.log('UUID:', entry.uuid);
+  console.log('Size:', entry.size, 'bytes');
+  
+  if (entry.isImage) {
+    // Apply transformations to images
+    const thumbUrl = `${entry.cdnUrl}-/scale_crop/200x200/center/`;
+    console.log('Thumbnail:', thumbUrl);
+  }
+});
+```
+
+## Error Handling
+
+```typescript
+uploaderCtx.addEventListener('file-upload-failed', (e) => {
+  const entry: OutputFileEntry = e.detail;
+  
+  console.error('Upload failed for:', entry.name);
+  
+  entry.errors.forEach(error => {
+    console.error('Error:', error.type, error.message);
+  });
+});
+```
+
+## Type Guards
+
+```typescript
+function isSuccessEntry(entry: OutputFileEntry): entry is OutputFileEntry<'success'> {
+  return entry.status === 'success';
+}
+
+function isFailedEntry(entry: OutputFileEntry): entry is OutputFileEntry<'failed'> {
+  return entry.status === 'failed';
+}
+
+// Usage
+if (isSuccessEntry(entry)) {
+  // TypeScript knows entry.cdnUrl is string (not null)
+  console.log(entry.cdnUrl.toUpperCase());
+}
+```
+
+## See Also
+
+- [OutputCollectionState](/api/types/output-collection-state) - Collection-level state
+- [Events](/api/types/events) - Event types and payloads
+- [UploaderPublicApi](/api/uploader-public-api) - Public API methods

@@ -1,0 +1,142 @@
+---
+title: "ConfigType"
+description: "Configuration type interface for the File Uploader"
+---
+
+The `ConfigType` interface defines all available configuration options for the Uploadcare File Uploader. Configuration can be set via HTML attributes on the `uc-config` element or programmatically through JavaScript.
+
+## Overview
+
+The File Uploader accepts over 70 configuration options organized into categories:
+
+- **Upload settings** - Basic upload behavior (pubkey, multiple, confirmUpload)
+- **File validation** - File type and size restrictions
+- **Upload sources** - Available upload methods
+- **Camera settings** - Camera and video recording options
+- **Storage & CDN** - CDN and storage configuration
+- **UI settings** - Interface customization
+- **Security** - Secure uploads and delivery
+- **Localization** - Language and translations
+
+## Type Definition
+
+```typescript
+export type ConfigType = {
+  // Core settings
+  pubkey: string;
+  multiple: boolean;
+  multipleMin: number;
+  multipleMax: number;
+  confirmUpload: boolean;
+  
+  // File validation
+  imgOnly: boolean;
+  accept: string;
+  maxLocalFileSizeBytes: number;
+  
+  // Upload sources
+  sourceList: string;
+  
+  // Camera settings
+  cameraMirror: boolean;
+  cameraCapture: 'user' | 'environment' | '';
+  cameraModes: string;
+  
+  // Storage
+  store: boolean | 'auto';
+  cdnCname: string;
+  
+  // UI
+  thumbSize: number;
+  showEmptyList: boolean;
+  filesViewMode: FilesViewMode;
+  
+  // Security
+  secureSignature: string;
+  secureExpire: string;
+  
+  // Localization
+  localeName: string;
+  
+  // Complex types
+  metadata: Metadata | MetadataCallback | null;
+  fileValidators: FileValidators;
+  collectionValidators: CollectionValidators;
+  
+  // ... and many more options
+};
+```
+
+## Plain vs Complex Configuration
+
+Configuration options are divided into two categories:
+
+### Plain Configuration
+Simple values that can be set via HTML attributes:
+
+```html
+<uc-config
+  ctx-name="my-uploader"
+  pubkey="YOUR_PUBLIC_KEY"
+  multiple="true"
+  max-local-file-size-bytes="10485760"
+  source-list="local, url, camera"
+></uc-config>
+```
+
+### Complex Configuration
+Objects, functions, or arrays that must be set via JavaScript:
+
+```javascript
+const config = document.querySelector('uc-config[ctx-name="my-uploader"]');
+
+config.metadata = {
+  subsystem: 'uploader',
+  userId: '12345'
+};
+
+config.fileValidators = [
+  {
+    name: 'file-size',
+    fn: (file) => file.size < 10485760,
+    message: 'File is too large'
+  }
+];
+```
+
+## Key Types
+
+### FilesViewMode
+```typescript
+type FilesViewMode = 'list' | 'grid';
+```
+
+### MetadataCallback
+```typescript
+type MetadataCallback = (fileEntry: OutputFileEntry) => Promise<Metadata> | Metadata;
+```
+
+### FileValidators
+```typescript
+type FileValidators = FileValidator[];
+```
+
+## Usage Example
+
+```typescript
+import type { ConfigType } from '@uploadcare/file-uploader';
+
+// Access configuration programmatically
+const config = document.querySelector<ConfigType>('uc-config[ctx-name="my-uploader"]');
+
+// Update configuration
+config.multiple = true;
+config.maxLocalFileSizeBytes = 10485760;
+config.sourceList = 'local, url, camera';
+```
+
+## See Also
+
+- [Configuration Options](/api/configuration-options) - Complete list of all options
+- [Configuration Concept](/concepts/configuration) - How configuration works
+- [Config Component](/components/config) - The uc-config component

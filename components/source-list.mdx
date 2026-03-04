@@ -1,0 +1,322 @@
+---
+title: SourceList
+description: Display a list of available upload sources as interactive buttons
+---
+
+The `SourceList` component renders a collection of source buttons based on the configured upload sources. It automatically handles camera mode variations and displays only the sources specified in your configuration.
+
+## Overview
+
+SourceList extends `LitBlock` and dynamically generates source buttons (`uc-source-btn`) for each enabled upload source. It respects the `sourceList` and `cameraModes` configuration and automatically adapts to mobile devices.
+
+## Basic Usage
+
+```html
+<uc-config ctx-name="my-uploader" source-list="local, url, camera, dropbox"></uc-config>
+<uc-source-list ctx-name="my-uploader"></uc-source-list>
+```
+
+This will render buttons for:
+- Local files
+- URL import
+- Camera
+- Dropbox
+
+## Properties
+
+<ParamField path="wrap" type="boolean" default="false">
+  CSS-only attribute that controls layout wrapping.
+  
+  ```html
+  <uc-source-list wrap></uc-source-list>
+  ```
+  
+  When `wrap` is enabled, the component has normal display. Otherwise, it uses `display: contents` to allow parent control of layout.
+</ParamField>
+
+## Available Sources
+
+Configure available sources through the Config component:
+
+<CodeGroup>
+```html HTML
+<uc-config 
+  ctx-name="my-uploader"
+  source-list="local, url, camera, dropbox, gdrive"
+></uc-config>
+```
+
+```javascript JavaScript
+const config = document.querySelector('uc-config');
+config.sourceList = 'local, url, camera, dropbox, gdrive';
+```
+</CodeGroup>
+
+### Built-in Sources
+
+- `local` - Local file system picker
+- `url` - Import from URL
+- `camera` - Camera capture (photo/video)
+- `dropbox` - Dropbox integration
+- `gdrive` - Google Drive
+- `gphotos` - Google Photos
+- `facebook` - Facebook
+- `instagram` - Instagram (deprecated)
+- `onedrive` - OneDrive
+- `box` - Box
+- `vk` - VK
+- `evernote` - Evernote
+- `flickr` - Flickr
+- `unsplash` - Unsplash
+
+<Note>
+  Instagram source was removed because the Instagram Basic Display API is no longer available as of December 4, 2024.
+</Note>
+
+## Camera Source Handling
+
+The `camera` source automatically expands based on device capabilities and configuration:
+
+### Desktop/Laptop
+
+```html
+<uc-config source-list="camera"></uc-config>
+<uc-source-list></uc-source-list>
+<!-- Renders: camera button -->
+```
+
+### Mobile Devices
+
+On mobile devices with HTML media capture support, the camera source splits into multiple buttons:
+
+```html
+<uc-config 
+  source-list="camera" 
+  camera-modes="photo, video"
+></uc-config>
+<uc-source-list></uc-source-list>
+<!-- Renders: mobile-photo-camera, mobile-video-camera -->
+```
+
+### Single Camera Mode
+
+```html
+<uc-config 
+  source-list="camera" 
+  camera-modes="photo"
+></uc-config>
+<uc-source-list></uc-source-list>
+<!-- Mobile renders: mobile-photo-camera only -->
+```
+
+## Layout Control
+
+### Using sourceListWrap Config
+
+```html
+<uc-config source-list-wrap="true"></uc-config>
+<uc-source-list></uc-source-list>
+```
+
+When `sourceListWrap` is enabled, the SourceList component uses flexbox wrapping for its layout.
+
+### Custom Layout with CSS
+
+```css
+/* Parent controls layout when wrap is disabled */
+.upload-sources {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+/* Style individual source buttons */
+uc-source-btn {
+  min-width: 100px;
+}
+```
+
+```html
+<div class="upload-sources">
+  <uc-source-list ctx-name="my-uploader"></uc-source-list>
+</div>
+```
+
+## Examples
+
+### Local and URL Only
+
+```html
+<uc-config 
+  ctx-name="my-uploader"
+  source-list="local, url"
+></uc-config>
+<uc-source-list ctx-name="my-uploader"></uc-source-list>
+```
+
+### Cloud Storage Sources
+
+```html
+<uc-config 
+  ctx-name="my-uploader"
+  source-list="local, dropbox, gdrive, onedrive, box"
+></uc-config>
+<uc-source-list ctx-name="my-uploader"></uc-source-list>
+```
+
+### Camera and Photo Services
+
+```html
+<uc-config 
+  ctx-name="my-uploader"
+  source-list="camera, gphotos, flickr, unsplash"
+  camera-modes="photo"
+></uc-config>
+<uc-source-list ctx-name="my-uploader"></uc-source-list>
+```
+
+### All Available Sources
+
+```html
+<uc-config 
+  ctx-name="my-uploader"
+  source-list="local, url, camera, dropbox, gdrive, gphotos, facebook, onedrive, box, vk, evernote, flickr, unsplash"
+></uc-config>
+<uc-source-list ctx-name="my-uploader" wrap></uc-source-list>
+```
+
+### Grid Layout
+
+```html
+<style>
+  .source-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 16px;
+  }
+</style>
+
+<div class="source-grid">
+  <uc-source-list ctx-name="my-uploader"></uc-source-list>
+</div>
+```
+
+## Dynamic Source Updates
+
+The source list automatically updates when configuration changes:
+
+```javascript
+const config = document.querySelector('uc-config');
+
+// Add Dropbox to sources
+config.sourceList = 'local, url, camera, dropbox';
+// SourceList automatically updates
+
+// Change camera modes
+config.cameraModes = 'video';
+// Camera sources update accordingly
+```
+
+## Reactive Behavior
+
+The component subscribes to configuration changes:
+
+```javascript
+// Component automatically responds to these changes:
+config.sourceList = 'local, url'; // Removes camera, cloud sources
+config.cameraModes = 'photo';     // Updates camera button variants
+```
+
+## Integration with Other Components
+
+SourceList works seamlessly with modal and activity components:
+
+```html
+<uc-upload-ctx-provider ctx-name="my-uploader"></uc-upload-ctx-provider>
+<uc-config ctx-name="my-uploader" pubkey="YOUR_KEY"></uc-config>
+
+<!-- Modal with source list -->
+<uc-modal ctx-name="my-uploader">
+  <uc-start-from ctx-name="my-uploader">
+    <uc-source-list ctx-name="my-uploader"></uc-source-list>
+  </uc-start-from>
+</uc-modal>
+```
+
+## Accessibility
+
+SourceList renders buttons with proper ARIA roles:
+
+```html
+<!-- Each source button has role="listitem" -->
+<uc-source-list role="list">
+  <uc-source-btn role="listitem" type="local"></uc-source-btn>
+  <uc-source-btn role="listitem" type="url"></uc-source-btn>
+  <!-- ... -->
+</uc-source-list>
+```
+
+## Styling
+
+Customize the appearance with CSS:
+
+```css
+/* Style the container */
+uc-source-list {
+  padding: 20px;
+  background: #f5f5f5;
+  border-radius: 8px;
+}
+
+/* Style individual source buttons */
+uc-source-list uc-source-btn {
+  transition: transform 0.2s;
+}
+
+uc-source-list uc-source-btn:hover {
+  transform: scale(1.05);
+}
+```
+
+## Conditional Rendering
+
+Sources automatically hide/show based on configuration:
+
+```javascript
+const config = document.querySelector('uc-config');
+
+// Show only local source
+config.sourceList = 'local';
+
+// Add more sources dynamically
+setTimeout(() => {
+  config.sourceList = 'local, url, camera';
+}, 2000);
+```
+
+## Browser Compatibility
+
+### Mobile Camera Detection
+
+The component automatically detects mobile devices that support HTML media capture:
+
+```javascript
+// Internal check:
+if (browserFeatures.htmlMediaCapture) {
+  // Renders mobile-specific camera buttons
+}
+```
+
+This ensures optimal camera source presentation on mobile devices.
+
+## Source Code Reference
+
+Implementation: `/workspace/source/src/blocks/SourceList/SourceList.ts:11`
+
+Source button component: `/workspace/source/src/blocks/SourceBtn/SourceBtn.ts`
+
+## See Also
+
+- [Config](/components/config) - Configure available sources
+- [CameraSource](/components/camera-source) - Camera capture interface
+- [UrlSource](/components/url-source) - URL import interface

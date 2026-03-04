@@ -1,0 +1,519 @@
+---
+title: UploaderPublicApi
+description: The main API interface for programmatically controlling the File Uploader, managing files, and interacting with the upload flow.
+---
+
+`UploaderPublicApi` is the core interface that provides programmatic access to File Uploader functionality. It allows you to add files from different sources, trigger uploads, manage the file collection, and control the upload flow.
+
+## Accessing the API
+
+The API is available through the `api` property of any File Uploader block context:
+
+```js
+import * as UC from '@uploadcare/file-uploader';
+
+UC.defineComponents(UC);
+
+const api = UC.PubSub.getCtx('my-uploader').api;
+```
+
+## File Management Methods
+
+### addFileFromObject
+
+Adds a file from a `File` or `Blob` object.
+
+<ParamField path="file" type="File" required>
+  The File or Blob object to upload
+</ParamField>
+
+<ParamField path="options" type="object">
+  Optional configuration
+  
+  <ParamField path="silent" type="boolean">
+    If `true`, the file will be added without triggering UI updates
+  </ParamField>
+  
+  <ParamField path="fileName" type="string">
+    Override the file name
+  </ParamField>
+  
+  <ParamField path="source" type="string">
+    Source identifier for tracking (e.g., 'api', 'local', 'camera')
+  </ParamField>
+  
+  <ParamField path="fullPath" type="string">
+    Full path for the file (useful for folder uploads)
+  </ParamField>
+</ParamField>
+
+**Returns:** `OutputFileEntry<'idle'>` - The file entry with status 'idle'
+
+**Example:**
+
+<CodeGroup>
+```js Basic Usage
+const fileInput = document.querySelector('input[type="file"]');
+fileInput.addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  const entry = api.addFileFromObject(file);
+  console.log('Added file:', entry.internalId);
+});
+```
+
+```js With Options
+api.addFileFromObject(file, {
+  fileName: 'custom-name.jpg',
+  source: 'api',
+  silent: false
+});
+```
+</CodeGroup>
+
+---
+
+### addFileFromUrl
+
+Adds a file from an external URL. The file will be imported from the provided URL.
+
+<ParamField path="url" type="string" required>
+  The URL of the file to import
+</ParamField>
+
+<ParamField path="options" type="ApiAddFileCommonOptions">
+  Optional configuration (silent, fileName, source)
+</ParamField>
+
+**Returns:** `OutputFileEntry<'idle'>`
+
+**Example:**
+
+```js
+api.addFileFromUrl('https://example.com/image.jpg', {
+  fileName: 'imported-image.jpg',
+  source: 'url'
+});
+```
+
+---
+
+### addFileFromUuid
+
+Adds a file that has already been uploaded to Uploadcare by its UUID.
+
+<ParamField path="uuid" type="string" required>
+  The UUID of the already uploaded file
+</ParamField>
+
+<ParamField path="options" type="ApiAddFileCommonOptions">
+  Optional configuration (silent, fileName, source)
+</ParamField>
+
+**Returns:** `OutputFileEntry<'idle'>`
+
+**Example:**
+
+```js
+api.addFileFromUuid('a6f0e5b0-8c8e-4c8c-8c8c-8c8c8c8c8c8c', {
+  fileName: 'existing-file.jpg'
+});
+```
+
+---
+
+### addFileFromCdnUrl
+
+Adds a file from an Uploadcare CDN URL, preserving any URL modifiers (transformations).
+
+<ParamField path="cdnUrl" type="string" required>
+  The Uploadcare CDN URL (can include transformations)
+</ParamField>
+
+<ParamField path="options" type="ApiAddFileCommonOptions">
+  Optional configuration (silent, fileName, source)
+</ParamField>
+
+**Returns:** `OutputFileEntry<'idle'>`
+
+**Throws:** Error if the CDN URL is invalid
+
+**Example:**
+
+```js
+// Add file with transformations preserved
+api.addFileFromCdnUrl(
+  'https://ucarecdn.com/uuid/-/preview/-/quality/smart/',
+  { fileName: 'preview.jpg' }
+);
+```
+
+<Note>
+The CDN URL will be parsed to extract the UUID, transformations, and filename. Custom CNAME settings from your configuration will be respected.
+</Note>
+
+---
+
+### removeFileByInternalId
+
+Removes a file from the upload collection by its internal ID.
+
+<ParamField path="internalId" type="string" required>
+  The internal ID of the file to remove
+</ParamField>
+
+**Throws:** Error if file with the given ID is not found
+
+**Example:**
+
+```js
+const entry = api.addFileFromObject(file);
+// Later...
+api.removeFileByInternalId(entry.internalId);
+```
+
+---
+
+### removeAllFiles
+
+Removes all files from the upload collection.
+
+**Example:**
+
+```js
+api.removeAllFiles();
+```
+
+---
+
+## Upload Control Methods
+
+### uploadAll
+
+Triggers upload for all files that are ready to be uploaded. Files are considered ready if they:
+- Are not removed
+- Are not currently uploading
+- Don't have file info (not already uploaded)
+- Have no validation errors
+- Are not pending validation
+
+**Example:**
+
+```js
+// Add files
+api.addFileFromObject(file1);
+api.addFileFromObject(file2);
+
+// Trigger upload
+api.uploadAll();
+```
+
+---
+
+### openSystemDialog
+
+Opens the native file picker dialog.
+
+<ParamField path="options" type="object">
+  <ParamField path="captureCamera" type="boolean">
+    If `true`, opens camera capture dialog on mobile devices
+  </ParamField>
+  
+  <ParamField path="modeCamera" type="'photo' | 'video'">
+    Camera mode to use when `captureCamera` is true
+  </ParamField>
+</ParamField>
+
+**Example:**
+
+<CodeGroup>
+```js File Picker
+api.openSystemDialog();
+```
+
+```js Camera Capture
+api.openSystemDialog({
+  captureCamera: true,
+  modeCamera: 'photo'
+});
+```
+</CodeGroup>
+
+---
+
+## State Query Methods
+
+### getOutputItem
+
+Retrieves the current state of a file entry by its internal ID.
+
+<ParamField path="entryId" type="string" required>
+  The internal ID of the file entry
+</ParamField>
+
+**Returns:** `OutputFileEntry<TStatus>`
+
+**Throws:** Error if entry is not found
+
+**Example:**
+
+```js
+const entry = api.getOutputItem(internalId);
+console.log('File status:', entry.status);
+console.log('Upload progress:', entry.uploadProgress);
+console.log('CDN URL:', entry.cdnUrl);
+```
+
+---
+
+### getOutputCollectionState
+
+Retrieves the current state of the entire file collection.
+
+**Returns:** `OutputCollectionState<TStatus>`
+
+**Example:**
+
+```js
+const state = api.getOutputCollectionState();
+console.log('Total files:', state.totalCount);
+console.log('Upload progress:', state.progress);
+console.log('Successful uploads:', state.successCount);
+console.log('All entries:', state.allEntries);
+```
+
+<Note>
+The collection state includes:
+- Status counts (total, success, failed, uploading)
+- Progress percentage
+- Grouped entries by status
+- Overall collection status
+- Group info (if `groupOutput` is enabled)
+</Note>
+
+---
+
+## Flow Control Methods
+
+### initFlow
+
+Initializes the upload flow, opening the appropriate UI based on configuration.
+
+<ParamField path="force" type="boolean" default={false}>
+  If `true`, forces the flow to restart even if files are already in the collection
+</ParamField>
+
+**Example:**
+
+```js
+// Open the uploader
+api.initFlow();
+
+// Force restart
+api.initFlow(true);
+```
+
+---
+
+### doneFlow
+
+Completes the upload flow and closes the UI.
+
+**Example:**
+
+```js
+api.doneFlow();
+```
+
+---
+
+### setCurrentActivity
+
+Sets the current activity (screen) in the uploader.
+
+<ParamField path="activityType" type="RegisteredActivityType" required>
+  The activity type to display (e.g., 'upload-list', 'camera', 'url')
+</ParamField>
+
+<ParamField path="params" type="ActivityParamsMap[T]">
+  Optional parameters for the activity
+</ParamField>
+
+**Example:**
+
+```js
+api.setCurrentActivity('upload-list');
+api.setCurrentActivity('camera', { mode: 'photo' });
+```
+
+---
+
+### getCurrentActivity
+
+Returns the current activity type.
+
+**Returns:** `ActivityType`
+
+**Example:**
+
+```js
+const current = api.getCurrentActivity();
+console.log('Current screen:', current);
+```
+
+---
+
+### setModalState
+
+Controls the modal open/close state.
+
+<ParamField path="opened" type="boolean" required>
+  `true` to open, `false` to close
+</ParamField>
+
+**Example:**
+
+```js
+// Open modal
+api.setModalState(true);
+
+// Close modal
+api.setModalState(false);
+```
+
+<Note>
+You must set a current activity before opening the modal, otherwise a warning will be logged.
+</Note>
+
+---
+
+## Configuration Access
+
+### cfg
+
+Provides read-only access to the uploader configuration.
+
+**Example:**
+
+```js
+console.log('Public key:', api.cfg.pubkey);
+console.log('Multiple files:', api.cfg.multiple);
+console.log('Max file size:', api.cfg.maxLocalFileSizeBytes);
+```
+
+---
+
+### l10n
+
+Provides access to the localization function.
+
+**Example:**
+
+```js
+const uploadText = api.l10n('upload');
+const cancelText = api.l10n('cancel');
+```
+
+---
+
+## Type Definitions
+
+### OutputFileEntry
+
+Represents a file in the upload collection with its current state:
+
+```ts
+type OutputFileEntry<TStatus extends OutputFileStatus> = {
+  status: 'idle' | 'uploading' | 'success' | 'failed' | 'removed';
+  internalId: string;
+  name: string;
+  size: number;
+  isImage: boolean;
+  mimeType: string;
+  metadata: Metadata | null;
+  file: File | Blob | null;
+  externalUrl: string | null;
+  uploadProgress: number;
+  fullPath: string | null;
+  source: SourceTypes | null;
+  uuid: string | null;
+  cdnUrl: string | null;
+  cdnUrlModifiers: string | null;
+  fileInfo: UploadcareFile | null;
+  isSuccess: boolean;
+  isUploading: boolean;
+  isFailed: boolean;
+  isRemoved: boolean;
+  errors: OutputError[];
+};
+```
+
+### OutputCollectionState
+
+Represents the state of the entire file collection:
+
+```ts
+type OutputCollectionState<TStatus extends OutputCollectionStatus> = {
+  status: 'idle' | 'uploading' | 'success' | 'failed';
+  totalCount: number;
+  successCount: number;
+  failedCount: number;
+  uploadingCount: number;
+  progress: number;
+  allEntries: OutputFileEntry[];
+  successEntries: OutputFileEntry<'success'>[];
+  failedEntries: OutputFileEntry<'failed'>[];
+  uploadingEntries: OutputFileEntry<'uploading'>[];
+  idleEntries: OutputFileEntry<'idle'>[];
+  group: UploadcareGroup | null;
+  isSuccess: boolean;
+  isUploading: boolean;
+  isFailed: boolean;
+  errors: OutputError[];
+};
+```
+
+---
+
+## Complete Example
+
+Here's a complete example showing common API usage patterns:
+
+```js
+import * as UC from '@uploadcare/file-uploader';
+
+UC.defineComponents(UC);
+
+const ctx = UC.PubSub.getCtx('my-uploader');
+const api = ctx.api;
+
+// Add files from different sources
+const entry1 = api.addFileFromObject(fileObject);
+const entry2 = api.addFileFromUrl('https://example.com/image.jpg');
+const entry3 = api.addFileFromUuid('existing-uuid');
+
+// Listen for upload completion
+ctx.sub('*collectionState', (state) => {
+  if (state.status === 'success') {
+    console.log('All files uploaded!');
+    state.successEntries.forEach(entry => {
+      console.log('CDN URL:', entry.cdnUrl);
+    });
+  }
+});
+
+// Trigger upload
+api.uploadAll();
+
+// Check individual file status
+const currentEntry = api.getOutputItem(entry1.internalId);
+if (currentEntry.isSuccess) {
+  console.log('File uploaded:', currentEntry.cdnUrl);
+}
+
+// Remove a file
+api.removeFileByInternalId(entry2.internalId);
+
+// Control the UI
+api.setCurrentActivity('upload-list');
+api.setModalState(true);
+```

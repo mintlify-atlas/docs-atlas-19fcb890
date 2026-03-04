@@ -1,0 +1,298 @@
+---
+title: 'FileUploaderMinimal'
+description: 'Compact file uploader with minimal UI, perfect for space-constrained layouts'
+icon: 'minimize'
+---
+
+## Overview
+
+The `FileUploaderMinimal` component provides a streamlined file upload experience with a minimal UI footprint. It combines an inline drop area with modal dialogs for additional sources, offering the best of both worlds - compact design with full functionality.
+
+## When to use
+
+Use `FileUploaderMinimal` when you need:
+
+- A compact upload interface that takes minimal space
+- Simple drag-and-drop with a "Choose file" button
+- Full upload sources available through modals when needed
+- Image-centric workflows with grid or list view
+- Quick file selection without overwhelming the UI
+
+## Basic usage
+
+<CodeGroup>
+
+```html CDN
+<script type="module">
+  import * as UC from 'https://cdn.jsdelivr.net/npm/@uploadcare/file-uploader@1/web/uc-file-uploader-minimal.min.js';
+  UC.defineComponents(UC);
+</script>
+
+<link
+  rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/@uploadcare/file-uploader@1/web/uc-file-uploader-minimal.min.css"
+/>
+
+<uc-file-uploader-minimal ctx-name="my-uploader"></uc-file-uploader-minimal>
+<uc-config ctx-name="my-uploader" pubkey="YOUR_PUBLIC_KEY"></uc-config>
+```
+
+```javascript NPM
+import * as UC from '@uploadcare/file-uploader';
+import '@uploadcare/file-uploader/web/uc-file-uploader-minimal.min.css';
+
+UC.defineComponents(UC);
+```
+
+```html Markup
+<uc-file-uploader-minimal ctx-name="my-uploader"></uc-file-uploader-minimal>
+<uc-config ctx-name="my-uploader" pubkey="YOUR_PUBLIC_KEY"></uc-config>
+```
+
+</CodeGroup>
+
+## Features
+
+### Minimal drop area
+
+The component starts with a compact drop area showing a "Choose file" button:
+
+```html
+<uc-file-uploader-minimal ctx-name="my-uploader"></uc-file-uploader-minimal>
+<uc-config
+  ctx-name="my-uploader"
+  pubkey="YOUR_PUBLIC_KEY"
+></uc-config>
+```
+
+### Automatic view transitions
+
+The uploader intelligently switches between views:
+
+1. **Drop area** - Initial state with "Choose file" button
+2. **Upload list** - Automatically shown when files are added
+3. **Modal sources** - Opens modals for camera, URL, or external sources
+
+### Instant upload mode
+
+By default, `FileUploaderMinimal` has `confirm-upload` set to `false`, meaning files upload immediately upon selection. The upload list is shown as soon as files are added.
+
+### File view modes
+
+Supports two view modes through configuration:
+
+- **Grid view** (default) - Display files as thumbnails in a grid
+- **List view** - Display files in a vertical list
+
+```html
+<uc-config
+  ctx-name="my-uploader"
+  pubkey="YOUR_PUBLIC_KEY"
+  files-view-mode="grid"
+></uc-config>
+```
+
+## Attributes
+
+### `ctx-name`
+
+<ParamField path="ctx-name" type="string" required>
+  The context name that links the uploader with its configuration. Must match the `ctx-name` in `uc-config`.
+</ParamField>
+
+## Configuration options
+
+Common configurations for FileUploaderMinimal:
+
+<Tabs>
+  <Tab title="Image gallery">
+    ```html
+    <uc-file-uploader-minimal ctx-name="my-uploader"></uc-file-uploader-minimal>
+    <uc-config
+      ctx-name="my-uploader"
+      pubkey="YOUR_PUBLIC_KEY"
+      img-only
+      group-output
+      files-view-mode="grid"
+    ></uc-config>
+    ```
+  </Tab>
+  <Tab title="Single file">
+    ```html
+    <uc-file-uploader-minimal ctx-name="my-uploader"></uc-file-uploader-minimal>
+    <uc-config
+      ctx-name="my-uploader"
+      pubkey="YOUR_PUBLIC_KEY"
+      multiple="false"
+    ></uc-config>
+    ```
+
+    <Note>
+      In single file mode with grid view, the component automatically adjusts to show only one column.
+    </Note>
+  </Tab>
+  <Tab title="With validation">
+    ```html
+    <uc-file-uploader-minimal ctx-name="my-uploader"></uc-file-uploader-minimal>
+    <uc-config
+      ctx-name="my-uploader"
+      pubkey="YOUR_PUBLIC_KEY"
+      img-only
+      max-local-file-size-bytes="10485760"
+      multiple-max="5"
+    ></uc-config>
+    ```
+  </Tab>
+</Tabs>
+
+## View mode behavior
+
+### Grid view
+
+Optimal for image uploads with thumbnail previews:
+
+```html
+<uc-config
+  ctx-name="my-uploader"
+  pubkey="YOUR_PUBLIC_KEY"
+  files-view-mode="grid"
+></uc-config>
+```
+
+Features:
+- Thumbnail previews for images
+- Responsive grid layout
+- Edit and remove buttons on hover
+- Automatically switches to single column when `multiple="false"`
+
+### List view
+
+Better for files with detailed information:
+
+```html
+<uc-config
+  ctx-name="my-uploader"
+  pubkey="YOUR_PUBLIC_KEY"
+  files-view-mode="list"
+></uc-config>
+```
+
+Features:
+- File names and sizes
+- Upload progress bars
+- Action buttons aligned
+
+## Modal integration
+
+Clicking the drop area or choosing alternative sources opens modal dialogs:
+
+- **Start From Modal** - Full source list (camera, URL, external services)
+- **Camera Modal** - Photo and video capture interface
+- **URL Modal** - Import files from URLs
+- **External Modal** - Connect to Dropbox, Google Drive, etc.
+- **Image Editor Modal** - Edit images before upload
+
+## Styling
+
+Customize the minimal uploader appearance:
+
+```html
+<style>
+  uc-file-uploader-minimal {
+    --uc-grid-col: 3; /* Grid columns */
+    max-width: 600px;
+  }
+</style>
+```
+
+### Theme classes
+
+```html
+<uc-file-uploader-minimal class="uc-light" ctx-name="my-uploader"></uc-file-uploader-minimal>
+```
+
+### Mode attribute
+
+The component automatically sets a `mode` attribute based on the configured view mode:
+
+```html
+<!-- Automatically added based on config -->
+<uc-file-uploader-minimal mode="grid" ctx-name="my-uploader"></uc-file-uploader-minimal>
+```
+
+You can use this for custom styling:
+
+```css
+uc-file-uploader-minimal[mode="grid"] {
+  /* Grid-specific styles */
+}
+
+uc-file-uploader-minimal[mode="list"] {
+  /* List-specific styles */
+}
+```
+
+## Upload workflow
+
+<Steps>
+  <Step title="File selection">
+    User clicks "Choose file" or drags files to the drop area
+  </Step>
+  <Step title="Immediate upload">
+    Files begin uploading automatically (no confirmation required)
+  </Step>
+  <Step title="Progress display">
+    Upload list appears showing progress for each file
+  </Step>
+  <Step title="Edit or remove">
+    Users can edit images or remove files during or after upload
+  </Step>
+</Steps>
+
+## Events
+
+Handle upload events in your application:
+
+```javascript
+const uploader = document.querySelector('uc-file-uploader-minimal');
+
+uploader.addEventListener('file-upload-success', (e) => {
+  console.log('File uploaded:', e.detail);
+});
+
+uploader.addEventListener('file-added', (e) => {
+  console.log('File added to queue:', e.detail);
+});
+
+uploader.addEventListener('file-removed', (e) => {
+  console.log('File removed:', e.detail);
+});
+```
+
+## Comparison with other solutions
+
+<CardGroup cols={2}>
+  <Card title="FileUploaderRegular" icon="window-maximize" href="/solutions/file-uploader-regular">
+    Full-featured with upload button and comprehensive modal workflows
+  </Card>
+  <Card title="FileUploaderInline" icon="rectangle-wide" href="/solutions/file-uploader-inline">
+    Inline interface without modals, shows all activities in-place
+  </Card>
+</CardGroup>
+
+## Use cases
+
+- **Image galleries** - Compact interface for uploading multiple images
+- **Avatar uploads** - Single image selection with minimal UI
+- **Form attachments** - Add files without disrupting form layout
+- **Product images** - E-commerce product photo uploads
+- **Document uploads** - Simple file selection for document management
+
+<Warning>
+  Remember that `FileUploaderMinimal` disables upload confirmation by default. If you need users to review files before uploading, use `FileUploaderRegular` or `FileUploaderInline` instead.
+</Warning>
+
+## Related components
+
+- [Config](/components/config) - Configure uploader behavior
+- [CloudImageEditor](/solutions/cloud-image-editor) - Standalone image editor

@@ -1,0 +1,584 @@
+---
+title: Event System and Handlers
+description: Listen to upload events and build reactive interfaces with the comprehensive event system
+---
+
+The File Uploader emits detailed events throughout the upload lifecycle, allowing you to build reactive interfaces, track progress, and handle errors.
+
+## Event Types
+
+All events are defined in the `EventType` enum:
+
+```typescript
+// Source: src/blocks/UploadCtxProvider/EventEmitter.ts:16-38
+export const EventType = Object.freeze({
+  // File-level events
+  FILE_ADDED: 'file-added',
+  FILE_REMOVED: 'file-removed',
+  FILE_UPLOAD_START: 'file-upload-start',
+  FILE_UPLOAD_PROGRESS: 'file-upload-progress',
+  FILE_UPLOAD_SUCCESS: 'file-upload-success',
+  FILE_UPLOAD_FAILED: 'file-upload-failed',
+  FILE_URL_CHANGED: 'file-url-changed',
+
+  // UI events
+  MODAL_OPEN: 'modal-open',
+  MODAL_CLOSE: 'modal-close',
+  DONE_CLICK: 'done-click',
+  UPLOAD_CLICK: 'upload-click',
+  ACTIVITY_CHANGE: 'activity-change',
+
+  // Collection-level events
+  COMMON_UPLOAD_START: 'common-upload-start',
+  COMMON_UPLOAD_PROGRESS: 'common-upload-progress',
+  COMMON_UPLOAD_SUCCESS: 'common-upload-success',
+  COMMON_UPLOAD_FAILED: 'common-upload-failed',
+
+  // Other events
+  CHANGE: 'change',
+  GROUP_CREATED: 'group-created',
+} as const);
+```
+
+## Listening to Events
+
+### Basic Event Listener
+
+```html
+<uc-upload-ctx-provider ctx-name="uploader" id="provider"></uc-upload-ctx-provider>
+
+<script>
+  const provider = document.getElementById('provider');
+  
+  provider.addEventListener('file-added', (event) => {
+    console.log('File added:', event.detail);
+  });
+</script>
+```
+
+### TypeScript Event Handling
+
+```typescript
+import { EventType, type EventPayload } from '@uploadcare/file-uploader';
+
+const provider = document.getElementById('provider') as UploadCtxProvider;
+
+provider.addEventListener(
+  EventType.FILE_UPLOAD_SUCCESS,
+  (event: CustomEvent<EventPayload[typeof EventType.FILE_UPLOAD_SUCCESS]>) => {
+    const fileEntry = event.detail;
+    console.log('Upload successful:', fileEntry.uuid);
+    console.log('CDN URL:', fileEntry.cdnUrl);
+  }
+);
+```
+
+## File Events
+
+### FILE_ADDED
+
+Fired when a file is added to the upload queue.
+
+```typescript
+provider.addEventListener('file-added', (event) => {
+  const file = event.detail;
+  console.log('Added:', file.name);
+  console.log('Size:', file.size);
+  console.log('Type:', file.mimeType);
+  console.log('Internal ID:', file.internalId);
+});
+```
+
+**Event Payload:**
+
+```typescript
+// Source: src/blocks/UploadCtxProvider/EventEmitter.ts:45
+type FileAddedPayload = OutputFileEntry<'idle'>;
+```
+
+### FILE_REMOVED
+
+Fired when a file is removed from the queue.
+
+```typescript
+provider.addEventListener('file-removed', (event) => {
+  const file = event.detail;
+  console.log('Removed:', file.name);
+});
+```
+
+### FILE_UPLOAD_START
+
+Fired when a file upload begins.
+
+```typescript
+provider.addEventListener('file-upload-start', (event) => {
+  const file = event.detail;
+  console.log('Starting upload:', file.name);
+  console.log('Status:', file.status); // 'uploading'
+});
+```
+
+### FILE_UPLOAD_PROGRESS
+
+Fired continuously during file upload.
+
+```typescript
+provider.addEventListener('file-upload-progress', (event) => {
+  const file = event.detail;
+  console.log(`${file.name}: ${file.uploadProgress}%`);
+});
+```
+
+**Progress Tracking Example:**
+
+```html
+<div id="progress-container"></div>
+
+<script>
+  const container = document.getElementById('progress-container');
+  const progressBars = new Map();
+  
+  provider.addEventListener('file-upload-start', (event) => {
+    const file = event.detail;
+    const progressBar = document.createElement('div');
+    progressBar.innerHTML = `
+      <div>${file.name}</div>
+      <progress id="progress-${file.internalId}" value="0" max="100"></progress>
+    `;
+    container.appendChild(progressBar);
+    progressBars.set(file.internalId, progressBar.querySelector('progress'));
+  });
+  
+  provider.addEventListener('file-upload-progress', (event) => {
+    const file = event.detail;
+    const bar = progressBars.get(file.internalId);
+    if (bar) {
+      bar.value = file.uploadProgress;
+    }
+  });
+</script>
+```
+
+### FILE_UPLOAD_SUCCESS
+
+Fired when a file upload completes successfully.
+
+```typescript
+provider.addEventListener('file-upload-success', (event) => {
+  const file = event.detail;
+  console.log('Upload complete!');
+  console.log('UUID:', file.uuid);
+  console.log('CDN URL:', file.cdnUrl);
+  console.log('File info:', file.fileInfo);
+});
+```
+
+**Event Payload:**
+
+```typescript
+// Source: src/blocks/UploadCtxProvider/EventEmitter.ts:49
+type FileUploadSuccessPayload = OutputFileEntry<'success'>;
+
+// The file entry includes:
+{
+  status: 'success',
+  uuid: string,
+  cdnUrl: string,
+  fileInfo: UploadcareFile,
+  isSuccess: true,
+  // ... other properties
+}
+```
+
+### FILE_UPLOAD_FAILED
+
+Fired when a file upload fails.
+
+```typescript
+provider.addEventListener('file-upload-failed', (event) => {
+  const file = event.detail;
+  console.error('Upload failed:', file.name);
+  console.error('Errors:', file.errors);
+  
+  file.errors.forEach(error => {
+    console.error(`${error.type}: ${error.message}`);
+  });
+});
+```
+
+### FILE_URL_CHANGED
+
+Fired when a file's CDN URL changes (e.g., after image editing).
+
+```typescript
+provider.addEventListener('file-url-changed', (event) => {
+  const file = event.detail;
+  console.log('New URL:', file.cdnUrl);
+  console.log('Modifiers:', file.cdnUrlModifiers);
+});
+```
+
+## Collection Events
+
+### COMMON_UPLOAD_START
+
+Fired when the upload process begins for the collection.
+
+```typescript
+provider.addEventListener('common-upload-start', (event) => {
+  const collection = event.detail;
+  console.log('Starting upload of', collection.totalCount, 'files');
+});
+```
+
+**Event Payload:**
+
+```typescript
+// Source: src/blocks/UploadCtxProvider/EventEmitter.ts:62
+type CommonUploadStartPayload = OutputCollectionState<'uploading'>;
+```
+
+### COMMON_UPLOAD_PROGRESS
+
+Fired as the collection upload progresses.
+
+```typescript
+provider.addEventListener('common-upload-progress', (event) => {
+  const collection = event.detail;
+  console.log(`Overall progress: ${collection.progress}%`);
+  console.log(`Uploaded: ${collection.successCount}/${collection.totalCount}`);
+  console.log(`Failed: ${collection.failedCount}`);
+});
+```
+
+### COMMON_UPLOAD_SUCCESS
+
+Fired when all files in the collection are successfully uploaded.
+
+```typescript
+provider.addEventListener('common-upload-success', (event) => {
+  const collection = event.detail;
+  console.log('All uploads complete!');
+  console.log('Files:', collection.successEntries);
+  
+  collection.successEntries.forEach(file => {
+    console.log(`${file.name}: ${file.cdnUrl}`);
+  });
+});
+```
+
+### COMMON_UPLOAD_FAILED
+
+Fired when the upload process fails.
+
+```typescript
+provider.addEventListener('common-upload-failed', (event) => {
+  const collection = event.detail;
+  console.error('Upload failed!');
+  console.error('Failed files:', collection.failedEntries);
+  console.error('Errors:', collection.errors);
+});
+```
+
+### GROUP_CREATED
+
+Fired when files are grouped together.
+
+```typescript
+provider.addEventListener('group-created', (event) => {
+  const collection = event.detail;
+  console.log('Group ID:', collection.group.uuid);
+  console.log('Group URL:', collection.group.cdnUrl);
+});
+```
+
+### CHANGE
+
+Fired whenever the collection state changes.
+
+```typescript
+provider.addEventListener('change', (event) => {
+  const collection = event.detail;
+  console.log('Collection changed');
+  console.log('Status:', collection.status);
+  console.log('Total files:', collection.totalCount);
+});
+```
+
+## UI Events
+
+### MODAL_OPEN
+
+Fired when a modal is opened.
+
+```typescript
+provider.addEventListener('modal-open', (event) => {
+  const { modalId } = event.detail;
+  console.log('Modal opened:', modalId);
+});
+```
+
+### MODAL_CLOSE
+
+Fired when a modal is closed.
+
+```typescript
+provider.addEventListener('modal-close', (event) => {
+  const { modalId, hasActiveModals } = event.detail;
+  console.log('Modal closed:', modalId);
+  console.log('Other modals open:', hasActiveModals);
+});
+```
+
+### DONE_CLICK
+
+Fired when the user clicks the "Done" button.
+
+```typescript
+provider.addEventListener('done-click', (event) => {
+  const collection = event.detail;
+  console.log('Done clicked');
+  console.log('Files:', collection.successEntries);
+  
+  // Close the uploader or proceed to next step
+});
+```
+
+### UPLOAD_CLICK
+
+Fired when the user clicks the "Upload" button.
+
+```typescript
+provider.addEventListener('upload-click', (event) => {
+  console.log('Upload button clicked');
+});
+```
+
+### ACTIVITY_CHANGE
+
+Fired when the active UI activity changes.
+
+```typescript
+provider.addEventListener('activity-change', (event) => {
+  const { activity } = event.detail;
+  console.log('Activity changed to:', activity);
+});
+```
+
+## Event Emitter Implementation
+
+The event system is managed by the `EventEmitter` class:
+
+```typescript
+// Source: src/blocks/UploadCtxProvider/EventEmitter.ts:70-130
+export class EventEmitter extends SharedInstance {
+  private _timeoutStore: Map<string, number> = new Map();
+  private _targets: Set<LitBlock> = new Set();
+
+  public emit<T extends EventKey>(
+    type: T,
+    payload?: () => EventPayload[T],
+    options: { debounce?: boolean | number } = {},
+  ): void {
+    const { debounce } = options;
+    
+    if (!debounce) {
+      this._dispatch(type, typeof payload === 'function' ? payload() : payload);
+      return;
+    }
+
+    // Debounce logic for high-frequency events
+    if (this._timeoutStore.has(type)) {
+      window.clearTimeout(this._timeoutStore.get(type));
+    }
+    
+    const timeout = typeof debounce === 'number' ? debounce : 20;
+    const timeoutId = window.setTimeout(() => {
+      const data = typeof payload === 'function' ? payload() : payload;
+      this._dispatch(type, data);
+      this._timeoutStore.delete(type);
+    }, timeout);
+    
+    this._timeoutStore.set(type, timeoutId);
+  }
+}
+```
+
+## Complete Example
+
+```html
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    #status { padding: 1rem; margin: 1rem 0; border: 1px solid #ccc; }
+    .file-status { margin: 0.5rem 0; }
+    .progress { width: 100%; height: 20px; }
+  </style>
+  
+  <script type="module">
+    import * as UC from 'https://cdn.jsdelivr.net/npm/@uploadcare/file-uploader@latest/web/file-uploader.min.js';
+    UC.defineComponents(UC);
+    
+    window.addEventListener('DOMContentLoaded', () => {
+      const provider = document.getElementById('provider');
+      const statusDiv = document.getElementById('status');
+      
+      // Track all events
+      const events = [];
+      
+      // File added
+      provider.addEventListener('file-added', (e) => {
+        events.push({ type: 'added', file: e.detail.name });
+        updateStatus();
+      });
+      
+      // Upload start
+      provider.addEventListener('common-upload-start', (e) => {
+        events.push({ type: 'upload-start', count: e.detail.totalCount });
+        updateStatus();
+      });
+      
+      // Progress
+      provider.addEventListener('common-upload-progress', (e) => {
+        const collection = e.detail;
+        statusDiv.innerHTML = `
+          <div>Progress: ${collection.progress}%</div>
+          <progress class="progress" value="${collection.progress}" max="100"></progress>
+          <div>Uploaded: ${collection.successCount}/${collection.totalCount}</div>
+        `;
+      });
+      
+      // Individual file success
+      provider.addEventListener('file-upload-success', (e) => {
+        const file = e.detail;
+        events.push({ 
+          type: 'file-success', 
+          file: file.name,
+          url: file.cdnUrl 
+        });
+        updateStatus();
+      });
+      
+      // Upload complete
+      provider.addEventListener('common-upload-success', (e) => {
+        const collection = e.detail;
+        statusDiv.innerHTML = `
+          <h3>Upload Complete!</h3>
+          <div>Total files: ${collection.successCount}</div>
+          <div>URLs:</div>
+          <ul>
+            ${collection.successEntries.map(f => 
+              `<li><a href="${f.cdnUrl}" target="_blank">${f.name}</a></li>`
+            ).join('')}
+          </ul>
+        `;
+      });
+      
+      // Upload failed
+      provider.addEventListener('common-upload-failed', (e) => {
+        const collection = e.detail;
+        statusDiv.innerHTML = `
+          <h3>Upload Failed</h3>
+          <div>Failed files: ${collection.failedCount}</div>
+          <div>Errors:</div>
+          <ul>
+            ${collection.errors.map(err => 
+              `<li>${err.message}</li>`
+            ).join('')}
+          </ul>
+        `;
+      });
+      
+      function updateStatus() {
+        statusDiv.innerHTML = `
+          <h3>Event Log</h3>
+          <div>${events.map(e => JSON.stringify(e)).join('<br>')}</div>
+        `;
+      }
+    });
+  </script>
+</head>
+<body>
+  <h1>Event System Demo</h1>
+  
+  <div id="status">Waiting for files...</div>
+  
+  <uc-file-uploader-regular ctx-name="uploader"></uc-file-uploader-regular>
+  
+  <uc-config 
+    ctx-name="uploader"
+    pubkey="YOUR_PUBLIC_KEY"
+    multiple="true"
+  ></uc-config>
+  
+  <uc-upload-ctx-provider 
+    id="provider" 
+    ctx-name="uploader">
+  </uc-upload-ctx-provider>
+</body>
+</html>
+```
+
+## Event Payload Types
+
+```typescript
+// Source: src/blocks/UploadCtxProvider/EventEmitter.ts:44-68
+export type EventPayload = {
+  [EventType.FILE_ADDED]: OutputFileEntry<'idle'>;
+  [EventType.FILE_REMOVED]: OutputFileEntry<'removed'>;
+  [EventType.FILE_UPLOAD_START]: OutputFileEntry<'uploading'>;
+  [EventType.FILE_UPLOAD_PROGRESS]: OutputFileEntry<'uploading'>;
+  [EventType.FILE_UPLOAD_SUCCESS]: OutputFileEntry<'success'>;
+  [EventType.FILE_UPLOAD_FAILED]: OutputFileEntry<'failed'>;
+  [EventType.FILE_URL_CHANGED]: OutputFileEntry<'success'>;
+  
+  [EventType.MODAL_OPEN]: { modalId: ModalId };
+  [EventType.MODAL_CLOSE]: { modalId: ModalId; hasActiveModals: boolean };
+  [EventType.ACTIVITY_CHANGE]: { activity: ActivityType };
+  [EventType.UPLOAD_CLICK]: undefined;
+  [EventType.DONE_CLICK]: OutputCollectionState;
+  
+  [EventType.COMMON_UPLOAD_START]: OutputCollectionState<'uploading'>;
+  [EventType.COMMON_UPLOAD_PROGRESS]: OutputCollectionState<'uploading'>;
+  [EventType.COMMON_UPLOAD_SUCCESS]: OutputCollectionState<'success'>;
+  [EventType.COMMON_UPLOAD_FAILED]: OutputCollectionState<'failed'>;
+  
+  [EventType.CHANGE]: OutputCollectionState;
+  [EventType.GROUP_CREATED]: OutputCollectionState<'success', 'has-group'>;
+};
+```
+
+## Best Practices
+
+<Tabs>
+  <Tab title="Performance">
+    - Use event delegation for multiple uploaders
+    - Debounce high-frequency events like `FILE_UPLOAD_PROGRESS`
+    - Clean up event listeners when components unmount
+    - Avoid heavy computations in event handlers
+  </Tab>
+  
+  <Tab title="Error Handling">
+    - Always listen to `COMMON_UPLOAD_FAILED` for error handling
+    - Check `file.errors` array for detailed error information
+    - Provide user feedback for failed uploads
+    - Log errors for debugging
+  </Tab>
+  
+  <Tab title="State Management">
+    - Use `CHANGE` event for reactive state updates
+    - Store collection state in your application
+    - Track file internal IDs for updates
+    - Use `done-click` to finalize the upload flow
+  </Tab>
+</Tabs>
+
+<Note>
+Events are emitted as native `CustomEvent` objects with the payload in the `detail` property.
+</Note>
+
+<Warning>
+Some events like `COMMON_UPLOAD_PROGRESS` fire frequently. Use debouncing or throttling if performing expensive operations.
+</Warning>

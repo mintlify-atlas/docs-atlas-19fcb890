@@ -1,0 +1,434 @@
+---
+title: 'CloudImageEditor'
+description: 'Standalone cloud-powered image editor with crop, filters, and tuning capabilities'
+icon: 'image'
+---
+
+## Overview
+
+The `CloudImageEditor` component is a standalone image editing solution that doesn't require file upload functionality. It provides a full-featured image editor that works with images already stored in Uploadcare CDN or any accessible URL.
+
+## When to use
+
+Use `CloudImageEditor` when you need:
+
+- Image editing capabilities without file upload
+- Post-upload image editing for existing files
+- Cloud-powered image transformations
+- Professional editing tools (crop, filters, color adjustments)
+- Integration with external image sources
+- A dedicated editing experience
+
+## Basic usage
+
+<CodeGroup>
+
+```html CDN
+<script type="module">
+  import * as UC from 'https://cdn.jsdelivr.net/npm/@uploadcare/file-uploader@1/web/uc-cloud-image-editor.min.js';
+  UC.defineComponents(UC);
+</script>
+
+<link
+  rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/@uploadcare/file-uploader@1/web/uc-cloud-image-editor.min.css"
+/>
+
+<uc-config
+  ctx-name="my-editor"
+  pubkey="YOUR_PUBLIC_KEY"
+  cdn-cname="https://ucarecdn.com/"
+></uc-config>
+
+<uc-cloud-image-editor
+  uuid="f4dc9ebc-ed6d-4b4d-83d1-863bf1e4bb7f"
+  ctx-name="my-editor"
+  class="uc-cloud-image-editor"
+></uc-cloud-image-editor>
+```
+
+```javascript NPM
+import * as UC from '@uploadcare/file-uploader';
+import '@uploadcare/file-uploader/web/uc-cloud-image-editor.min.css';
+
+UC.defineComponents(UC);
+```
+
+```html Markup
+<uc-config
+  ctx-name="my-editor"
+  pubkey="YOUR_PUBLIC_KEY"
+  cdn-cname="https://ucarecdn.com/"
+></uc-config>
+
+<uc-cloud-image-editor
+  uuid="YOUR_IMAGE_UUID"
+  ctx-name="my-editor"
+></uc-cloud-image-editor>
+```
+
+</CodeGroup>
+
+<Note>
+  Set explicit dimensions for the editor component to ensure proper display:
+  ```css
+  .uc-cloud-image-editor {
+    width: 100vw;
+    height: 100vh;
+  }
+  ```
+</Note>
+
+## Features
+
+### Editing tabs
+
+The editor supports multiple editing capabilities organized in tabs:
+
+- **Crop** - Aspect ratio presets and freeform cropping
+- **Tuning** - Brightness, contrast, saturation, and more
+- **Filters** - Pre-built filter effects
+
+### Cloud-powered transformations
+
+All edits are applied using Uploadcare's cloud transformation engine, ensuring:
+
+- Fast processing without client-side computation
+- Consistent results across devices
+- No quality loss during editing
+- Ability to revert or modify transformations later
+
+## Attributes
+
+### `uuid`
+
+<ParamField path="uuid" type="string">
+  The Uploadcare UUID of the image to edit. Use this when working with images already uploaded to Uploadcare.
+
+  ```html
+  <uc-cloud-image-editor
+    uuid="f4dc9ebc-ed6d-4b4d-83d1-863bf1e4bb7f"
+    ctx-name="my-editor"
+  ></uc-cloud-image-editor>
+  ```
+</ParamField>
+
+### `cdn-url`
+
+<ParamField path="cdn-url" type="string">
+  Full CDN URL of the image to edit. Use this as an alternative to `uuid` when working with external images or when you have the complete URL.
+
+  ```html
+  <uc-cloud-image-editor
+    cdn-url="https://ucarecdn.com/f4dc9ebc-ed6d-4b4d-83d1-863bf1e4bb7f/"
+    ctx-name="my-editor"
+  ></uc-cloud-image-editor>
+  ```
+</ParamField>
+
+<Warning>
+  You must provide either `uuid` or `cdn-url`, but not both.
+</Warning>
+
+### `ctx-name`
+
+<ParamField path="ctx-name" type="string" required>
+  The context name that links the editor with its configuration. Must match the `ctx-name` in `uc-config`.
+</ParamField>
+
+### `tabs`
+
+<ParamField path="tabs" type="string" default="tuning,filters,crop">
+  Comma-separated list of tabs to show in the editor. Controls which editing capabilities are available.
+
+  Available tabs:
+  - `crop` - Cropping and aspect ratio tools
+  - `tuning` - Color and brightness adjustments
+  - `filters` - Pre-built filter effects
+
+  ```html
+  <uc-cloud-image-editor
+    uuid="YOUR_IMAGE_UUID"
+    ctx-name="my-editor"
+    tabs="crop,filters"
+  ></uc-cloud-image-editor>
+  ```
+</ParamField>
+
+### `crop-preset`
+
+<ParamField path="crop-preset" type="string">
+  Define preset aspect ratios for the crop tool. Provide a comma-separated list of ratios.
+
+  ```html
+  <uc-cloud-image-editor
+    uuid="YOUR_IMAGE_UUID"
+    ctx-name="my-editor"
+    tabs="crop"
+    crop-preset="1:1, 16:9, 4:3, 3:4, 9:16"
+  ></uc-cloud-image-editor>
+  ```
+
+  Common presets:
+  - `1:1` - Square (Instagram, profile pictures)
+  - `16:9` - Widescreen (video, banners)
+  - `4:3` - Standard photo
+  - `3:4` - Portrait
+  - `9:16` - Vertical video (Stories, Reels)
+</ParamField>
+
+## Configuration
+
+Configure the editor through the `uc-config` component:
+
+<Tabs>
+  <Tab title="Crop only">
+    ```html
+    <uc-config
+      ctx-name="my-editor"
+      pubkey="YOUR_PUBLIC_KEY"
+      cdn-cname="https://ucarecdn.com/"
+    ></uc-config>
+
+    <uc-cloud-image-editor
+      uuid="YOUR_IMAGE_UUID"
+      ctx-name="my-editor"
+      tabs="crop"
+      crop-preset="1:1, 16:9, 4:3"
+    ></uc-cloud-image-editor>
+    ```
+  </Tab>
+  <Tab title="All features">
+    ```html
+    <uc-config
+      ctx-name="my-editor"
+      pubkey="YOUR_PUBLIC_KEY"
+      cdn-cname="https://ucarecdn.com/"
+    ></uc-config>
+
+    <uc-cloud-image-editor
+      uuid="YOUR_IMAGE_UUID"
+      ctx-name="my-editor"
+      tabs="tuning,filters,crop"
+      crop-preset="1:1, 16:9, 4:3, 3:4, 9:16"
+    ></uc-cloud-image-editor>
+    ```
+  </Tab>
+  <Tab title="Filters only">
+    ```html
+    <uc-config
+      ctx-name="my-editor"
+      pubkey="YOUR_PUBLIC_KEY"
+      cdn-cname="https://ucarecdn.com/"
+    ></uc-config>
+
+    <uc-cloud-image-editor
+      uuid="YOUR_IMAGE_UUID"
+      ctx-name="my-editor"
+      tabs="filters"
+    ></uc-cloud-image-editor>
+    ```
+  </Tab>
+</Tabs>
+
+## Styling
+
+### Full-screen editor
+
+```html
+<style>
+  .uc-cloud-image-editor {
+    width: 100vw;
+    height: 100vh;
+  }
+  body {
+    margin: 0;
+    height: 100vh;
+  }
+</style>
+
+<uc-cloud-image-editor
+  uuid="YOUR_IMAGE_UUID"
+  ctx-name="my-editor"
+  class="uc-cloud-image-editor"
+></uc-cloud-image-editor>
+```
+
+### Embedded editor
+
+```html
+<style>
+  .image-editor-container {
+    width: 800px;
+    height: 600px;
+  }
+</style>
+
+<div class="image-editor-container">
+  <uc-cloud-image-editor
+    uuid="YOUR_IMAGE_UUID"
+    ctx-name="my-editor"
+  ></uc-cloud-image-editor>
+</div>
+```
+
+### Theme
+
+Apply light or dark theme:
+
+```html
+<uc-cloud-image-editor
+  uuid="YOUR_IMAGE_UUID"
+  ctx-name="my-editor"
+  class="uc-light"
+></uc-cloud-image-editor>
+```
+
+## Programmatic control
+
+Control the editor programmatically using its API:
+
+```javascript
+const editor = document.querySelector('uc-cloud-image-editor');
+
+// Wait for initialization
+await editor.updateComplete;
+
+// Get editor state
+const state = editor.$['*editorTransformations'];
+
+// Listen to changes
+editor.addEventListener('change', (e) => {
+  console.log('Editor state changed:', e.detail);
+});
+```
+
+## Getting edited image URL
+
+The editor outputs transformed image URLs through events:
+
+```javascript
+const editor = document.querySelector('uc-cloud-image-editor');
+
+editor.addEventListener('apply', (e) => {
+  const { cdnUrl, cdnUrlModifiers, transformations } = e.detail;
+  
+  console.log('Edited image URL:', cdnUrl);
+  console.log('Applied transformations:', transformations);
+});
+```
+
+## Integration patterns
+
+### Edit after upload
+
+Combine with file uploaders to edit images after upload:
+
+```javascript
+const uploader = document.querySelector('uc-file-uploader-regular');
+const editor = document.querySelector('uc-cloud-image-editor');
+
+uploader.addEventListener('file-upload-success', (e) => {
+  const { uuid } = e.detail;
+  
+  // Load image in editor
+  editor.uuid = uuid;
+  
+  // Show editor
+  editor.style.display = 'block';
+});
+```
+
+### Save edited results
+
+```javascript
+const editor = document.querySelector('uc-cloud-image-editor');
+const saveButton = document.querySelector('#save-btn');
+
+saveButton.addEventListener('click', async () => {
+  // Trigger apply event
+  editor.dispatchEvent(new CustomEvent('apply'));
+});
+
+editor.addEventListener('apply', async (e) => {
+  const { cdnUrl } = e.detail;
+  
+  // Save to your backend
+  await fetch('/api/save-image', {
+    method: 'POST',
+    body: JSON.stringify({ imageUrl: cdnUrl }),
+    headers: { 'Content-Type': 'application/json' }
+  });
+});
+```
+
+## Crop presets reference
+
+Common aspect ratio presets:
+
+| Preset | Description | Use Case |
+|--------|-------------|----------|
+| `1:1` | Square | Social media posts, avatars |
+| `16:9` | Widescreen | Video thumbnails, banners |
+| `9:16` | Vertical | Stories, mobile video |
+| `4:3` | Standard | Traditional photos |
+| `3:4` | Portrait | Portrait photos |
+| `21:9` | Ultrawide | Cinematic, panoramas |
+| `2:3` | Photo | Classic photo print |
+
+## Events
+
+<ResponseField name="apply" type="CustomEvent">
+  Fired when user applies edits. Contains edited image URL and transformation details.
+  
+  ```javascript
+  editor.addEventListener('apply', (e) => {
+    console.log(e.detail.cdnUrl);
+  });
+  ```
+</ResponseField>
+
+<ResponseField name="change" type="CustomEvent">
+  Fired when editor state changes (crop, filter, or tuning adjustment).
+  
+  ```javascript
+  editor.addEventListener('change', (e) => {
+    console.log(e.detail.transformations);
+  });
+  ```
+</ResponseField>
+
+<ResponseField name="close" type="CustomEvent">
+  Fired when user closes the editor or cancels editing.
+  
+  ```javascript
+  editor.addEventListener('close', () => {
+    console.log('Editor closed');
+  });
+  ```
+</ResponseField>
+
+## Comparison with integrated editing
+
+<Card title="Integrated in file uploaders" icon="puzzle-piece">
+  File uploader components include image editing capabilities built-in. Use `CloudImageEditor` as a standalone component when you need:
+  - Post-upload editing of existing images
+  - Editing without upload workflow
+  - Custom integration patterns
+  - Dedicated editing interface
+</Card>
+
+## Use cases
+
+- **Profile picture editor** - Let users crop and adjust profile photos
+- **Product image editing** - Edit product photos after upload
+- **Content management** - Edit featured images in CMS
+- **Social media prep** - Prepare images for different platforms
+- **Image library management** - Edit images in existing collections
+
+## Related components
+
+- [FileUploaderRegular](/solutions/file-uploader-regular) - Includes integrated image editing
+- [FileUploaderInline](/solutions/file-uploader-inline) - Includes integrated image editing
+- [FileUploaderMinimal](/solutions/file-uploader-minimal) - Includes integrated image editing
+- [Config](/components/config) - Configure editor behavior

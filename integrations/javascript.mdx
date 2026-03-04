@@ -1,0 +1,469 @@
+---
+title: "JavaScript Integration"
+description: "Integrate Uploadcare File Uploader with vanilla JavaScript"
+---
+
+## Overview
+
+Uploadcare File Uploader can be integrated into any web project using vanilla JavaScript. This guide covers both CDN and npm package approaches.
+
+## CDN Installation
+
+### Quick Setup
+
+The fastest way to get started is using the CDN:
+
+```html index.html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>File Uploader Demo</title>
+  
+  <!-- Include CSS -->
+  <link
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/@uploadcare/file-uploader@1/web/uc-file-uploader-regular.min.css"
+  />
+</head>
+<body>
+  <!-- Configure the uploader -->
+  <uc-config
+    ctx-name="my-uploader"
+    pubkey="YOUR_PUBLIC_KEY"
+  ></uc-config>
+
+  <!-- Add the uploader component -->
+  <uc-file-uploader-regular
+    ctx-name="my-uploader"
+  ></uc-file-uploader-regular>
+
+  <!-- Load the JavaScript -->
+  <script type="module">
+    import * as UC from 'https://cdn.jsdelivr.net/npm/@uploadcare/file-uploader@1/web/file-uploader.min.js';
+    
+    UC.defineComponents(UC);
+  </script>
+</body>
+</html>
+```
+
+<Note>
+Replace `YOUR_PUBLIC_KEY` with your actual Uploadcare public key from your [dashboard](https://app.uploadcare.com/projects/-/api-keys/).
+</Note>
+
+## NPM Installation
+
+### Install Package
+
+For build-tool-based projects:
+
+```bash
+npm install @uploadcare/file-uploader
+```
+
+### Basic Setup
+
+```javascript main.js
+import * as UC from '@uploadcare/file-uploader';
+import '@uploadcare/file-uploader/index.css';
+
+// Define custom elements
+UC.defineComponents(UC);
+```
+
+```html index.html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>File Uploader</title>
+</head>
+<body>
+  <uc-config
+    ctx-name="my-uploader"
+    pubkey="YOUR_PUBLIC_KEY"
+  ></uc-config>
+
+  <uc-file-uploader-regular
+    ctx-name="my-uploader"
+  ></uc-file-uploader-regular>
+
+  <script type="module" src="./main.js"></script>
+</body>
+</html>
+```
+
+## Handling Upload Events
+
+Listen to upload events using the context provider:
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/@uploadcare/file-uploader@1/web/uc-file-uploader-regular.min.css"
+  />
+</head>
+<body>
+  <uc-config
+    ctx-name="my-uploader"
+    pubkey="YOUR_PUBLIC_KEY"
+  ></uc-config>
+
+  <uc-file-uploader-regular
+    ctx-name="my-uploader"
+  ></uc-file-uploader-regular>
+
+  <uc-upload-ctx-provider
+    id="ctx-provider"
+    ctx-name="my-uploader"
+  ></uc-upload-ctx-provider>
+
+  <script type="module">
+    import * as UC from 'https://cdn.jsdelivr.net/npm/@uploadcare/file-uploader@1/web/file-uploader.min.js';
+    
+    UC.defineComponents(UC);
+
+    const ctxProvider = document.getElementById('ctx-provider');
+
+    // Handle successful uploads
+    ctxProvider.addEventListener('file-upload-success', (e) => {
+      console.log('File uploaded:', e.detail);
+      const { uuid, cdnUrl, name, size } = e.detail;
+      
+      // Display uploaded file info
+      alert(`File "${name}" uploaded successfully!\nCDN URL: ${cdnUrl}`);
+    });
+
+    // Handle file added to upload list
+    ctxProvider.addEventListener('file-added', (e) => {
+      console.log('File added:', e.detail);
+    });
+
+    // Handle upload errors
+    ctxProvider.addEventListener('upload-error', (e) => {
+      console.error('Upload error:', e.detail);
+      alert(`Upload failed: ${e.detail.message}`);
+    });
+  </script>
+</body>
+</html>
+```
+
+## Configuration Options
+
+Configure the uploader using attributes:
+
+```html
+<uc-config
+  ctx-name="my-uploader"
+  pubkey="YOUR_PUBLIC_KEY"
+  multiple="true"
+  img-only="false"
+  source-list="local, url, camera, dropbox, gdrive"
+  max-local-file-size-bytes="52428800"
+  multiple-min="1"
+  multiple-max="10"
+></uc-config>
+```
+
+### Common Configuration Attributes
+
+| Attribute | Type | Description |
+|-----------|------|-------------|
+| `pubkey` | string | Your Uploadcare public key |
+| `multiple` | boolean | Allow multiple file uploads |
+| `img-only` | boolean | Restrict to image files only |
+| `source-list` | string | Comma-separated upload sources |
+| `max-local-file-size-bytes` | number | Maximum file size in bytes |
+| `multiple-min` | number | Minimum number of files |
+| `multiple-max` | number | Maximum number of files |
+
+## Available Solutions
+
+Choose the right uploader for your needs:
+
+<Tabs>
+  <Tab title="Regular">
+    Full-featured modal uploader:
+
+    ```html
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@uploadcare/file-uploader@1/web/uc-file-uploader-regular.min.css" />
+    <uc-file-uploader-regular ctx-name="my-uploader"></uc-file-uploader-regular>
+    ```
+
+    Best for standard upload workflows.
+  </Tab>
+  <Tab title="Inline">
+    Inline embedded uploader:
+
+    ```html
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@uploadcare/file-uploader@1/web/uc-file-uploader-inline.min.css" />
+    <uc-file-uploader-inline ctx-name="my-uploader"></uc-file-uploader-inline>
+    ```
+
+    Best for forms and embedded contexts.
+  </Tab>
+  <Tab title="Minimal">
+    Minimalist uploader:
+
+    ```html
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@uploadcare/file-uploader@1/web/uc-file-uploader-minimal.min.css" />
+    <uc-file-uploader-minimal ctx-name="my-uploader"></uc-file-uploader-minimal>
+    ```
+
+    Best for simple, compact interfaces.
+  </Tab>
+</Tabs>
+
+## Form Integration
+
+Integrate with HTML forms:
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@uploadcare/file-uploader@1/web/uc-file-uploader-regular.min.css" />
+</head>
+<body>
+  <form id="upload-form">
+    <uc-config
+      ctx-name="my-uploader"
+      pubkey="YOUR_PUBLIC_KEY"
+      multiple="true"
+    ></uc-config>
+
+    <uc-file-uploader-regular ctx-name="my-uploader">
+      <uc-form-input ctx-name="my-uploader" name="files"></uc-form-input>
+    </uc-file-uploader-regular>
+
+    <uc-upload-ctx-provider
+      id="ctx-provider"
+      ctx-name="my-uploader"
+    ></uc-upload-ctx-provider>
+
+    <button type="submit">Submit</button>
+  </form>
+
+  <div id="results"></div>
+
+  <script type="module">
+    import * as UC from 'https://cdn.jsdelivr.net/npm/@uploadcare/file-uploader@1/web/file-uploader.min.js';
+    
+    UC.defineComponents(UC);
+
+    const form = document.getElementById('upload-form');
+    const ctxProvider = document.getElementById('ctx-provider');
+    const results = document.getElementById('results');
+    const uploadedFiles = [];
+
+    ctxProvider.addEventListener('file-upload-success', (e) => {
+      uploadedFiles.push(e.detail.uuid);
+    });
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      
+      const formData = new FormData(e.target);
+      const data = Object.fromEntries(formData.entries());
+      
+      results.innerHTML = `
+        <h3>Submitted Data</h3>
+        <pre>${JSON.stringify({ ...data, uploadedFiles }, null, 2)}</pre>
+      `;
+      
+      console.log('Form submitted with files:', uploadedFiles);
+    });
+  </script>
+</body>
+</html>
+```
+
+## Dynamic Configuration
+
+Update configuration programmatically:
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@uploadcare/file-uploader@1/web/uc-file-uploader-regular.min.css" />
+</head>
+<body>
+  <button id="toggle-multiple">Toggle Multiple</button>
+  <button id="images-only">Images Only</button>
+  <button id="all-files">All Files</button>
+
+  <uc-config
+    id="config"
+    ctx-name="my-uploader"
+    pubkey="YOUR_PUBLIC_KEY"
+  ></uc-config>
+
+  <uc-file-uploader-regular ctx-name="my-uploader"></uc-file-uploader-regular>
+
+  <script type="module">
+    import * as UC from 'https://cdn.jsdelivr.net/npm/@uploadcare/file-uploader@1/web/file-uploader.min.js';
+    
+    UC.defineComponents(UC);
+
+    const config = document.getElementById('config');
+
+    document.getElementById('toggle-multiple').addEventListener('click', () => {
+      const current = config.getAttribute('multiple') === 'true';
+      config.setAttribute('multiple', String(!current));
+    });
+
+    document.getElementById('images-only').addEventListener('click', () => {
+      config.setAttribute('img-only', 'true');
+    });
+
+    document.getElementById('all-files').addEventListener('click', () => {
+      config.setAttribute('img-only', 'false');
+    });
+  </script>
+</body>
+</html>
+```
+
+## Custom Styling
+
+Customize appearance using CSS variables:
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@uploadcare/file-uploader@1/web/uc-file-uploader-regular.min.css" />
+  <style>
+    uc-file-uploader-regular {
+      --uc-primary-color: #007bff;
+      --uc-secondary-color: #6c757d;
+      --uc-border-radius: 12px;
+      --uc-font-family: 'Segoe UI', system-ui, sans-serif;
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 20px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Custom Styled Uploader</h1>
+  
+  <uc-config ctx-name="my-uploader" pubkey="YOUR_PUBLIC_KEY"></uc-config>
+  <uc-file-uploader-regular ctx-name="my-uploader"></uc-file-uploader-regular>
+
+  <script type="module">
+    import * as UC from 'https://cdn.jsdelivr.net/npm/@uploadcare/file-uploader@1/web/file-uploader.min.js';
+    UC.defineComponents(UC);
+  </script>
+</body>
+</html>
+```
+
+## Multiple Uploaders
+
+Use different context names for multiple uploaders:
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@uploadcare/file-uploader@1/web/uc-file-uploader-regular.min.css" />
+</head>
+<body>
+  <h2>Profile Picture</h2>
+  <uc-config
+    ctx-name="profile-uploader"
+    pubkey="YOUR_PUBLIC_KEY"
+    img-only="true"
+    multiple="false"
+  ></uc-config>
+  <uc-file-uploader-minimal ctx-name="profile-uploader"></uc-file-uploader-minimal>
+
+  <h2>Document Upload</h2>
+  <uc-config
+    ctx-name="document-uploader"
+    pubkey="YOUR_PUBLIC_KEY"
+    multiple="true"
+  ></uc-config>
+  <uc-file-uploader-regular ctx-name="document-uploader"></uc-file-uploader-regular>
+
+  <script type="module">
+    import * as UC from 'https://cdn.jsdelivr.net/npm/@uploadcare/file-uploader@1/web/file-uploader.min.js';
+    UC.defineComponents(UC);
+  </script>
+</body>
+</html>
+```
+
+## Best Practices
+
+<Steps>
+  <Step title="Initialize Once">
+    Call `UC.defineComponents(UC)` only once per page to register all custom elements.
+  </Step>
+  <Step title="Use Unique Context Names">
+    When using multiple uploaders, assign unique `ctx-name` values to each configuration.
+  </Step>
+  <Step title="Load from CDN or Bundle">
+    Choose either CDN (for quick prototypes) or npm package (for production builds).
+  </Step>
+  <Step title="Handle Events Properly">
+    Always listen to events on the `uc-upload-ctx-provider` element.
+  </Step>
+</Steps>
+
+## Troubleshooting
+
+### Components Not Rendering
+
+Ensure you've called `defineComponents(UC)` before the DOM is ready:
+
+```javascript
+import * as UC from 'https://cdn.jsdelivr.net/npm/@uploadcare/file-uploader@1/web/file-uploader.min.js';
+UC.defineComponents(UC);
+```
+
+### CSS Not Loading
+
+Verify the CSS link is correct and matches your chosen solution:
+
+```html
+<!-- For regular uploader -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@uploadcare/file-uploader@1/web/uc-file-uploader-regular.min.css" />
+```
+
+### Events Not Firing
+
+Make sure you're listening to events on the `uc-upload-ctx-provider` element:
+
+```html
+<uc-upload-ctx-provider id="ctx-provider" ctx-name="my-uploader"></uc-upload-ctx-provider>
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Configuration" icon="gear" href="/api/configuration-options">
+    Explore all configuration options
+  </Card>
+  <Card title="Events API" icon="bolt" href="/api/types/events">
+    Learn about available events
+  </Card>
+  <Card title="Live Examples" icon="code" href="https://github.com/uploadcare/file-uploader-examples/tree/main/examples/js-uploader">
+    View complete JavaScript examples
+  </Card>
+  <Card title="Styling" icon="palette" href="/customization/styling">
+    Learn how to customize the appearance
+  </Card>
+</CardGroup>

@@ -1,0 +1,487 @@
+---
+title: "Vue Integration"
+description: "Integrate Uploadcare File Uploader in Vue 3 applications"
+---
+
+## Overview
+
+Uploadcare File Uploader works seamlessly with Vue 3 applications. This guide covers both Composition API and Options API approaches for integrating the Web Components-based uploader.
+
+## Installation
+
+Install the File Uploader package:
+
+```bash
+npm install @uploadcare/file-uploader
+```
+
+## Composition API Setup
+
+### Basic Component
+
+Create a Vue component using the Composition API:
+
+```vue FileUploader.vue
+<template>
+  <div>
+    <uc-config
+      ctx-name="my-uploader"
+      :pubkey="publicKey"
+    />
+    <uc-file-uploader-regular
+      ctx-name="my-uploader"
+    />
+  </div>
+</template>
+
+<script setup lang="ts">
+import { onMounted, ref } from 'vue';
+import * as UC from '@uploadcare/file-uploader';
+import '@uploadcare/file-uploader/index.css';
+
+const publicKey = ref('YOUR_PUBLIC_KEY');
+
+onMounted(() => {
+  UC.defineComponents(UC);
+});
+</script>
+```
+
+<Note>
+Replace `YOUR_PUBLIC_KEY` with your actual Uploadcare public key from your [dashboard](https://app.uploadcare.com/projects/-/api-keys/).
+</Note>
+
+### With Event Handlers
+
+Handle upload events using template refs:
+
+```vue FileUploaderWithEvents.vue
+<template>
+  <div>
+    <uc-config
+      ctx-name="my-uploader"
+      :pubkey="publicKey"
+    />
+    <uc-file-uploader-regular
+      ctx-name="my-uploader"
+    />
+    <uc-upload-ctx-provider
+      ref="ctxProvider"
+      ctx-name="my-uploader"
+    />
+  </div>
+</template>
+
+<script setup lang="ts">
+import { onMounted, onUnmounted, ref } from 'vue';
+import * as UC from '@uploadcare/file-uploader';
+import '@uploadcare/file-uploader/index.css';
+
+const publicKey = ref('YOUR_PUBLIC_KEY');
+const ctxProvider = ref<any>(null);
+
+const handleUploadSuccess = (e: CustomEvent) => {
+  console.log('File uploaded:', e.detail);
+  const { uuid, cdnUrl, name } = e.detail;
+  // Handle the uploaded file
+};
+
+const handleFileAdded = (e: CustomEvent) => {
+  console.log('File added:', e.detail);
+};
+
+const handleError = (e: CustomEvent) => {
+  console.error('Upload error:', e.detail);
+};
+
+onMounted(() => {
+  UC.defineComponents(UC);
+
+  const provider = ctxProvider.value;
+  if (provider) {
+    provider.addEventListener('file-upload-success', handleUploadSuccess);
+    provider.addEventListener('file-added', handleFileAdded);
+    provider.addEventListener('upload-error', handleError);
+  }
+});
+
+onUnmounted(() => {
+  const provider = ctxProvider.value;
+  if (provider) {
+    provider.removeEventListener('file-upload-success', handleUploadSuccess);
+    provider.removeEventListener('file-added', handleFileAdded);
+    provider.removeEventListener('upload-error', handleError);
+  }
+});
+</script>
+```
+
+## Options API Setup
+
+For applications using the Options API:
+
+```vue FileUploader.vue
+<template>
+  <div>
+    <uc-config
+      ctx-name="my-uploader"
+      :pubkey="publicKey"
+    />
+    <uc-file-uploader-regular
+      ctx-name="my-uploader"
+    />
+    <uc-upload-ctx-provider
+      ref="ctxProvider"
+      ctx-name="my-uploader"
+    />
+  </div>
+</template>
+
+<script lang="ts">
+import { defineComponent } from 'vue';
+import * as UC from '@uploadcare/file-uploader';
+import '@uploadcare/file-uploader/index.css';
+
+export default defineComponent({
+  name: 'FileUploader',
+  data() {
+    return {
+      publicKey: 'YOUR_PUBLIC_KEY',
+    };
+  },
+  mounted() {
+    UC.defineComponents(UC);
+
+    const provider = this.$refs.ctxProvider as any;
+    if (provider) {
+      provider.addEventListener('file-upload-success', this.handleUploadSuccess);
+      provider.addEventListener('file-added', this.handleFileAdded);
+      provider.addEventListener('upload-error', this.handleError);
+    }
+  },
+  beforeUnmount() {
+    const provider = this.$refs.ctxProvider as any;
+    if (provider) {
+      provider.removeEventListener('file-upload-success', this.handleUploadSuccess);
+      provider.removeEventListener('file-added', this.handleFileAdded);
+      provider.removeEventListener('upload-error', this.handleError);
+    }
+  },
+  methods: {
+    handleUploadSuccess(e: CustomEvent) {
+      console.log('File uploaded:', e.detail);
+      const { uuid, cdnUrl, name } = e.detail;
+      // Handle the uploaded file
+    },
+    handleFileAdded(e: CustomEvent) {
+      console.log('File added:', e.detail);
+    },
+    handleError(e: CustomEvent) {
+      console.error('Upload error:', e.detail);
+    },
+  },
+});
+</script>
+```
+
+## Configuration
+
+Pass configuration as props to the `uc-config` component:
+
+```vue
+<template>
+  <uc-config
+    ctx-name="my-uploader"
+    :pubkey="publicKey"
+    :multiple="true"
+    :img-only="false"
+    source-list="local, url, camera, dropbox"
+    :max-local-file-size-bytes="52428800"
+  />
+</template>
+
+<script setup lang="ts">
+import { ref } from 'vue';
+
+const publicKey = ref('YOUR_PUBLIC_KEY');
+</script>
+```
+
+<Note>
+Vue automatically converts camelCase props to kebab-case attributes. You can use either `imgOnly` or `img-only`.
+</Note>
+
+## Form Integration
+
+Integrate with Vue forms:
+
+```vue FormWithUpload.vue
+<template>
+  <form @submit.prevent="handleSubmit">
+    <uc-config
+      ctx-name="my-uploader"
+      :pubkey="publicKey"
+      :multiple="true"
+    />
+    <uc-file-uploader-regular ctx-name="my-uploader">
+      <uc-form-input ctx-name="my-uploader" name="files" />
+    </uc-file-uploader-regular>
+    <uc-upload-ctx-provider
+      ref="ctxProvider"
+      ctx-name="my-uploader"
+    />
+    <button type="submit">Submit</button>
+  </form>
+</template>
+
+<script setup lang="ts">
+import { onMounted, onUnmounted, ref } from 'vue';
+import * as UC from '@uploadcare/file-uploader';
+import '@uploadcare/file-uploader/index.css';
+
+const publicKey = ref('YOUR_PUBLIC_KEY');
+const ctxProvider = ref<any>(null);
+const uploadedFiles = ref<string[]>([]);
+
+const handleUploadSuccess = (e: CustomEvent) => {
+  uploadedFiles.value.push(e.detail.uuid);
+};
+
+const handleSubmit = () => {
+  console.log('Submitted with files:', uploadedFiles.value);
+  // Send to your API
+};
+
+onMounted(() => {
+  UC.defineComponents(UC);
+
+  const provider = ctxProvider.value;
+  if (provider) {
+    provider.addEventListener('file-upload-success', handleUploadSuccess);
+  }
+});
+
+onUnmounted(() => {
+  const provider = ctxProvider.value;
+  if (provider) {
+    provider.removeEventListener('file-upload-success', handleUploadSuccess);
+  }
+});
+</script>
+```
+
+## Available Solutions
+
+Choose the uploader that fits your use case:
+
+<Tabs>
+  <Tab title="Regular">
+    ```vue
+    <uc-file-uploader-regular ctx-name="my-uploader" />
+    ```
+    Modal-based uploader with full features.
+  </Tab>
+  <Tab title="Inline">
+    ```vue
+    <uc-file-uploader-inline ctx-name="my-uploader" />
+    ```
+    Inline uploader for embedded use.
+  </Tab>
+  <Tab title="Minimal">
+    ```vue
+    <uc-file-uploader-minimal ctx-name="my-uploader" />
+    ```
+    Minimalist uploader with basic controls.
+  </Tab>
+</Tabs>
+
+## Composable Pattern
+
+Create a reusable composable:
+
+```typescript composables/useFileUploader.ts
+import { onMounted, onUnmounted, ref, type Ref } from 'vue';
+import * as UC from '@uploadcare/file-uploader';
+import '@uploadcare/file-uploader/index.css';
+
+interface UploadEvents {
+  onUploadSuccess?: (detail: any) => void;
+  onFileAdded?: (detail: any) => void;
+  onError?: (detail: any) => void;
+}
+
+export function useFileUploader(events: UploadEvents = {}) {
+  const ctxProviderRef: Ref<any> = ref(null);
+
+  const handleUploadSuccess = (e: CustomEvent) => {
+    events.onUploadSuccess?.(e.detail);
+  };
+
+  const handleFileAdded = (e: CustomEvent) => {
+    events.onFileAdded?.(e.detail);
+  };
+
+  const handleError = (e: CustomEvent) => {
+    events.onError?.(e.detail);
+  };
+
+  onMounted(() => {
+    UC.defineComponents(UC);
+
+    const provider = ctxProviderRef.value;
+    if (provider) {
+      provider.addEventListener('file-upload-success', handleUploadSuccess);
+      provider.addEventListener('file-added', handleFileAdded);
+      provider.addEventListener('upload-error', handleError);
+    }
+  });
+
+  onUnmounted(() => {
+    const provider = ctxProviderRef.value;
+    if (provider) {
+      provider.removeEventListener('file-upload-success', handleUploadSuccess);
+      provider.removeEventListener('file-added', handleFileAdded);
+      provider.removeEventListener('upload-error', handleError);
+    }
+  });
+
+  return { ctxProviderRef };
+}
+```
+
+Use the composable:
+
+```vue
+<template>
+  <div>
+    <uc-config ctx-name="my-uploader" :pubkey="publicKey" />
+    <uc-file-uploader-regular ctx-name="my-uploader" />
+    <uc-upload-ctx-provider ref="ctxProviderRef" ctx-name="my-uploader" />
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref } from 'vue';
+import { useFileUploader } from '@/composables/useFileUploader';
+
+const publicKey = ref('YOUR_PUBLIC_KEY');
+
+const { ctxProviderRef } = useFileUploader({
+  onUploadSuccess: (detail) => console.log('Uploaded:', detail),
+  onError: (detail) => console.error('Error:', detail),
+});
+</script>
+```
+
+## Custom Styling
+
+Style the uploader with CSS:
+
+```vue
+<style scoped>
+uc-file-uploader-regular {
+  --uc-primary-color: #42b883;
+  --uc-secondary-color: #35495e;
+  --uc-border-radius: 8px;
+}
+</style>
+```
+
+## TypeScript Support
+
+For better TypeScript support, you can extend Vue's component types:
+
+```typescript shims-vue.d.ts
+import '@vue/runtime-core';
+
+declare module '@vue/runtime-core' {
+  export interface GlobalComponents {
+    'uc-config': any;
+    'uc-file-uploader-regular': any;
+    'uc-file-uploader-inline': any;
+    'uc-file-uploader-minimal': any;
+    'uc-upload-ctx-provider': any;
+    'uc-form-input': any;
+  }
+}
+```
+
+## Vite Configuration
+
+If you're using Vite, ensure Web Components are configured correctly:
+
+```typescript vite.config.ts
+import { defineConfig } from 'vite';
+import vue from '@vitejs/plugin-vue';
+
+export default defineConfig({
+  plugins: [
+    vue({
+      template: {
+        compilerOptions: {
+          // Treat all tags starting with 'uc-' as custom elements
+          isCustomElement: (tag) => tag.startsWith('uc-'),
+        },
+      },
+    }),
+  ],
+});
+```
+
+## Best Practices
+
+<Steps>
+  <Step title="Initialize Once">
+    Call `defineComponents()` once in the component's `onMounted` or `mounted` hook.
+  </Step>
+  <Step title="Clean Up Event Listeners">
+    Remove event listeners in `onUnmounted` or `beforeUnmount` to prevent memory leaks.
+  </Step>
+  <Step title="Use Template Refs">
+    Access Web Component instances using Vue's template refs.
+  </Step>
+  <Step title="Configure Vite">
+    Add custom element configuration to avoid Vue warnings about unknown custom elements.
+  </Step>
+</Steps>
+
+## Troubleshooting
+
+### Unknown Custom Element Warning
+
+If you see warnings about unknown custom elements, configure Vite to recognize `uc-*` tags:
+
+```typescript vite.config.ts
+compilerOptions: {
+  isCustomElement: (tag) => tag.startsWith('uc-'),
+}
+```
+
+### Events Not Firing
+
+Ensure you're attaching event listeners to the `uc-upload-ctx-provider` component, not the uploader itself.
+
+### CSS Not Loading
+
+Make sure to import the CSS file in your component:
+
+```typescript
+import '@uploadcare/file-uploader/index.css';
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Configuration" icon="gear" href="/api/configuration-options">
+    Explore all configuration options
+  </Card>
+  <Card title="Events API" icon="bolt" href="/api/types/events">
+    Learn about available events
+  </Card>
+  <Card title="Live Examples" icon="code" href="https://github.com/uploadcare/file-uploader-examples/tree/main/examples/vue-uploader">
+    View complete Vue examples
+  </Card>
+  <Card title="Styling" icon="palette" href="/customization/styling">
+    Learn how to customize the appearance
+  </Card>
+</CardGroup>

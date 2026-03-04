@@ -1,0 +1,434 @@
+---
+title: UploadList
+description: Display and manage the collection of files being uploaded with progress tracking and actions
+---
+
+The `UploadList` component provides a complete file management interface, displaying all files in the upload collection with their status, progress, and actions. It includes buttons for uploading, adding more files, clearing the list, and confirming completion.
+
+## Overview
+
+UploadList extends `LitUploaderBlock` and serves as the main activity for managing uploads. It displays file items, tracks upload progress, shows validation errors, and provides controls for managing the upload workflow.
+
+## Basic Usage
+
+```html
+<uc-upload-list ctx-name="my-uploader"></uc-upload-list>
+```
+
+Typically used as part of a modal workflow:
+
+```html
+<uc-file-uploader-regular ctx-name="my-uploader"></uc-file-uploader-regular>
+<uc-config ctx-name="my-uploader" pubkey="YOUR_KEY"></uc-config>
+```
+
+## Display Modes
+
+Configure the file display mode via the Config component:
+
+<CodeGroup>
+```html List Mode (Default)
+<uc-config files-view-mode="list"></uc-config>
+<uc-upload-list></uc-upload-list>
+```
+
+```html Grid Mode
+<uc-config files-view-mode="grid"></uc-config>
+<uc-upload-list></uc-upload-list>
+```
+</CodeGroup>
+
+## Features
+
+### File Display
+
+- Shows all files with thumbnails (when applicable)
+- Displays upload progress for each file
+- Shows file size and name
+- Indicates validation errors per file
+- Allows individual file removal
+
+### Progress Tracking
+
+The header dynamically updates to show:
+- Total file count
+- Number of files uploading
+- Number of successful uploads
+- Number of failed uploads
+
+```javascript
+// Header text automatically updates based on state:
+// "Uploading 3 of 5 files"
+// "3 files uploaded successfully"
+// "2 files failed to upload"
+```
+
+### Action Buttons
+
+#### Upload Button
+
+Shown when `confirmUpload` is enabled:
+
+```html
+<uc-config confirm-upload="true"></uc-config>
+<uc-upload-list></uc-upload-list>
+```
+
+Allows users to manually start the upload process.
+
+#### Done Button
+
+Shown after successful uploads:
+
+```html
+<!-- Appears when all files are uploaded successfully -->
+<!-- Triggers 'done-click' event -->
+```
+
+#### Add More Button
+
+Allows adding additional files:
+
+```html
+<uc-config multiple multiple-max="10"></uc-config>
+<uc-upload-list></uc-upload-list>
+<!-- Shows "Add more" button until max is reached -->
+```
+
+#### Clear Button
+
+Removes all files from the collection:
+
+```html
+<!-- Clears entire upload collection -->
+```
+
+## Configuration
+
+### Show Empty List
+
+```html
+<uc-config show-empty-list="true"></uc-config>
+<uc-upload-list></uc-upload-list>
+```
+
+By default, UploadList is hidden when no files are present. Enable `show-empty-list` to always display it.
+
+### Upload Confirmation
+
+```html
+<uc-config confirm-upload="true"></uc-config>
+<uc-upload-list></uc-upload-list>
+```
+
+When enabled:
+- Files are not uploaded automatically
+- User must click "Upload" button
+- Useful for review workflows
+
+### File Count Restrictions
+
+```html
+<uc-config 
+  multiple
+  multiple-min="1"
+  multiple-max="5"
+></uc-config>
+<uc-upload-list></uc-upload-list>
+```
+
+The component enforces these restrictions:
+- Shows error if too few files
+- Disables "Add more" when max reached
+- Shows validation messages
+
+### Group Output
+
+```html
+<uc-config group-output="true"></uc-config>
+<uc-upload-list></uc-upload-list>
+```
+
+When enabled, files are grouped into a single CDN group URL after upload.
+
+## Custom Content
+
+### Empty State
+
+Customize the empty state message:
+
+```html
+<uc-upload-list ctx-name="my-uploader">
+  <div slot="empty">
+    <h3>No files yet</h3>
+    <p>Click "Add files" to get started</p>
+  </div>
+</uc-upload-list>
+```
+
+Default text: "No files"
+
+## State Management
+
+The component tracks comprehensive upload state:
+
+```typescript
+type Summary = {
+  total: number;              // Total number of files
+  succeed: number;            // Successfully uploaded
+  uploading: number;          // Currently uploading
+  failed: number;             // Failed uploads
+  validatingBeforeUploading: number; // Pending validation
+};
+```
+
+## Events
+
+UploadList emits events through the UploadCtxProvider:
+
+```javascript
+const uploader = document.querySelector('uc-upload-ctx-provider');
+
+uploader.addEventListener('upload-click', () => {
+  console.log('User clicked upload button');
+});
+
+uploader.addEventListener('done-click', (e) => {
+  console.log('Upload complete:', e.detail);
+  console.log('Files:', e.detail.successEntries);
+});
+```
+
+## Error Handling
+
+Errors are displayed prominently:
+
+### Collection Errors
+
+```html
+<!-- Shown at the bottom of the list -->
+<div class="uc-common-error">
+  Too many files. Maximum is 5.
+</div>
+```
+
+### Individual File Errors
+
+Each file item shows its own errors:
+- Validation errors
+- Upload errors
+- Network errors
+
+## Examples
+
+### Basic Setup
+
+```html
+<uc-upload-ctx-provider ctx-name="my-uploader"></uc-upload-ctx-provider>
+<uc-config 
+  ctx-name="my-uploader"
+  pubkey="demopublickey"
+></uc-config>
+<uc-upload-list ctx-name="my-uploader"></uc-upload-list>
+```
+
+### With Manual Upload Confirmation
+
+```html
+<uc-config 
+  ctx-name="my-uploader"
+  pubkey="YOUR_KEY"
+  confirm-upload
+></uc-config>
+<uc-upload-list ctx-name="my-uploader"></uc-upload-list>
+
+<script>
+  const uploader = document.querySelector('uc-upload-ctx-provider');
+  
+  uploader.addEventListener('upload-click', () => {
+    console.log('User clicked upload');
+  });
+</script>
+```
+
+### Grid View with File Limits
+
+```html
+<uc-config 
+  ctx-name="my-uploader"
+  pubkey="YOUR_KEY"
+  files-view-mode="grid"
+  grid-show-file-names
+  multiple
+  multiple-min="1"
+  multiple-max="10"
+></uc-config>
+<uc-upload-list ctx-name="my-uploader"></uc-upload-list>
+```
+
+### Always Visible with Custom Empty State
+
+```html
+<uc-config 
+  ctx-name="my-uploader"
+  pubkey="YOUR_KEY"
+  show-empty-list
+></uc-config>
+<uc-upload-list ctx-name="my-uploader">
+  <div slot="empty" style="text-align: center; padding: 40px;">
+    <h2>Ready to Upload</h2>
+    <p>Drop files or click "Add files" to begin</p>
+  </div>
+</uc-upload-list>
+```
+
+### With Group Output
+
+```html
+<uc-config 
+  ctx-name="my-uploader"
+  pubkey="YOUR_KEY"
+  group-output
+></uc-config>
+<uc-upload-list ctx-name="my-uploader"></uc-upload-list>
+
+<script>
+  const uploader = document.querySelector('uc-upload-ctx-provider');
+  
+  uploader.addEventListener('group-created', (e) => {
+    console.log('Group URL:', e.detail.groupInfo.cdnUrl);
+  });
+</script>
+```
+
+### Complete Upload Flow Handler
+
+```javascript
+const uploader = document.querySelector('uc-upload-ctx-provider');
+
+uploader.addEventListener('file-added', (e) => {
+  console.log('File added:', e.detail.name);
+});
+
+uploader.addEventListener('file-upload-progress', (e) => {
+  console.log(`${e.detail.name}: ${e.detail.progress}%`);
+});
+
+uploader.addEventListener('file-upload-success', (e) => {
+  console.log('Success:', e.detail.cdnUrl);
+});
+
+uploader.addEventListener('file-upload-failed', (e) => {
+  console.error('Failed:', e.detail.name, e.detail.error);
+});
+
+uploader.addEventListener('done-click', (e) => {
+  const files = e.detail.successEntries.map(entry => ({
+    uuid: entry.uuid,
+    cdnUrl: entry.cdnUrl,
+    name: entry.name
+  }));
+  
+  console.log('All uploads complete:', files);
+  
+  // Send to your backend
+  fetch('/api/save-uploads', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ files })
+  });
+});
+```
+
+## Button Visibility Logic
+
+The component intelligently shows/hides buttons:
+
+```javascript
+// Upload button: shown when confirmUpload is enabled and files are ready
+const uploadBtnVisible = 
+  hasFilesReadyToUpload && 
+  !validationErrors && 
+  confirmUpload === true;
+
+// Done button: shown after successful uploads
+const doneBtnVisible = 
+  allFilesUploaded && 
+  noErrors;
+
+// Add more button: shown unless max files reached
+const addMoreBtnVisible = 
+  totalFiles < multipleMax || 
+  !exactMatchRequired;
+```
+
+## Accessibility
+
+### ARIA Live Region
+
+The header uses `aria-live="polite"` to announce status changes:
+
+```html
+<span aria-live="polite" class="uc-header-text">
+  Uploading 2 of 5 files
+</span>
+```
+
+### Keyboard Navigation
+
+- All buttons are keyboard accessible
+- Focus management during upload
+- Escape key closes the modal (when used in modal context)
+
+### Screen Reader Support
+
+- Meaningful button labels
+- Status announcements
+- Error messages are associated with their context
+
+## Styling
+
+```css
+/* Customize the upload list */
+uc-upload-list {
+  max-height: 600px;
+}
+
+/* Grid mode specific */
+uc-upload-list[mode="grid"] {
+  padding: 20px;
+}
+
+/* Style the files wrapper */
+uc-upload-list .uc-files-wrapper {
+  gap: 16px;
+}
+
+/* Error message styling */
+uc-upload-list .uc-common-error {
+  background: #fee;
+  padding: 12px;
+  border-radius: 4px;
+}
+```
+
+## Internal Components
+
+UploadList uses these child components:
+
+- `uc-activity-header` - Header with title and close button
+- `uc-file-item` - Individual file display
+- `uc-drop-area` - Ghost drop zone for adding more files
+- `uc-icon` - Icons for buttons
+
+## Source Code Reference
+
+Implementation: `/workspace/source/src/blocks/UploadList/UploadList.ts:26`
+
+File item component: `/workspace/source/src/blocks/FileItem/FileItem.ts`
+
+## See Also
+
+- [UploadCtxProvider](/components/upload-ctx-provider) - Event handling
+- [Config](/components/config) - Configuration options
+- [DropArea](/components/drop-area) - File drop zone

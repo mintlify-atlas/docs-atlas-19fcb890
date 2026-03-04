@@ -1,0 +1,362 @@
+---
+title: UploadCtxProvider
+description: Root context provider that manages upload state and emits events for the File Uploader
+---
+
+The `UploadCtxProvider` component serves as the root context provider for Uploadcare File Uploader. It manages the upload state, coordinates between components, and emits custom events for all upload-related activities.
+
+## Overview
+
+UploadCtxProvider extends `LitUploaderBlock` and acts as the central event dispatcher. It binds an internal event emitter to the DOM, allowing you to listen for upload lifecycle events using standard DOM event listeners.
+
+## Basic Usage
+
+```html
+<uc-upload-ctx-provider ctx-name="my-uploader"></uc-upload-ctx-provider>
+<uc-config ctx-name="my-uploader" pubkey="YOUR_PUBLIC_KEY"></uc-config>
+```
+
+## With Event Listeners
+
+```html
+<uc-upload-ctx-provider 
+  ctx-name="my-uploader"
+  id="uploader"
+></uc-upload-ctx-provider>
+
+<script>
+  const uploader = document.getElementById('uploader');
+  
+  uploader.addEventListener('file-added', (e) => {
+    console.log('File added:', e.detail);
+  });
+  
+  uploader.addEventListener('file-upload-success', (e) => {
+    console.log('File uploaded:', e.detail);
+  });
+  
+  uploader.addEventListener('done-click', (e) => {
+    console.log('Upload complete:', e.detail);
+  });
+</script>
+```
+
+## Attributes
+
+<ParamField path="ctx-name" type="string" required>
+  Context name that links this provider with other components. All components with the same `ctx-name` share state and configuration.
+  
+  ```html
+  <uc-upload-ctx-provider ctx-name="my-uploader"></uc-upload-ctx-provider>
+  ```
+</ParamField>
+
+## Events
+
+UploadCtxProvider emits standard CustomEvents that you can listen to using `addEventListener`. All events carry relevant data in the `detail` property.
+
+### File Events
+
+<ParamField path="file-added" type="CustomEvent">
+  Fired when a file is added to the upload collection.
+  
+  **Detail**: `OutputFileEntry<'idle'>` - File entry in idle state
+  
+  ```javascript
+  uploader.addEventListener('file-added', (e) => {
+    console.log('File:', e.detail.name);
+    console.log('Size:', e.detail.size);
+    console.log('UID:', e.detail.uid);
+  });
+  ```
+</ParamField>
+
+<ParamField path="file-removed" type="CustomEvent">
+  Fired when a file is removed from the upload collection.
+  
+  **Detail**: `OutputFileEntry<'removed'>` - Removed file entry
+  
+  ```javascript
+  uploader.addEventListener('file-removed', (e) => {
+    console.log('Removed:', e.detail.name);
+  });
+  ```
+</ParamField>
+
+<ParamField path="file-upload-start" type="CustomEvent">
+  Fired when a file upload begins.
+  
+  **Detail**: `OutputFileEntry<'uploading'>` - File entry in uploading state
+  
+  ```javascript
+  uploader.addEventListener('file-upload-start', (e) => {
+    console.log('Upload started:', e.detail.name);
+  });
+  ```
+</ParamField>
+
+<ParamField path="file-upload-progress" type="CustomEvent">
+  Fired during file upload to report progress.
+  
+  **Detail**: `OutputFileEntry<'uploading'>` - File entry with progress info
+  
+  ```javascript
+  uploader.addEventListener('file-upload-progress', (e) => {
+    console.log('Progress:', e.detail.name, e.detail.progress);
+  });
+  ```
+</ParamField>
+
+<ParamField path="file-upload-success" type="CustomEvent">
+  Fired when a file upload completes successfully.
+  
+  **Detail**: `OutputFileEntry<'success'>` - Successful file entry
+  
+  ```javascript
+  uploader.addEventListener('file-upload-success', (e) => {
+    console.log('Success:', e.detail.name);
+    console.log('CDN URL:', e.detail.cdnUrl);
+    console.log('UUID:', e.detail.uuid);
+  });
+  ```
+</ParamField>
+
+<ParamField path="file-upload-failed" type="CustomEvent">
+  Fired when a file upload fails.
+  
+  **Detail**: `OutputFileEntry<'failed'>` - Failed file entry
+  
+  ```javascript
+  uploader.addEventListener('file-upload-failed', (e) => {
+    console.log('Failed:', e.detail.name);
+    console.log('Error:', e.detail.error);
+  });
+  ```
+</ParamField>
+
+<ParamField path="file-url-changed" type="CustomEvent">
+  Fired when a file's CDN URL changes (e.g., after editing).
+  
+  **Detail**: `OutputFileEntry<'success'>` - File entry with updated URL
+  
+  ```javascript
+  uploader.addEventListener('file-url-changed', (e) => {
+    console.log('New URL:', e.detail.cdnUrl);
+  });
+  ```
+</ParamField>
+
+### Collection Events
+
+<ParamField path="common-upload-start" type="CustomEvent">
+  Fired when batch upload starts for all files.
+  
+  **Detail**: `OutputCollectionState<'uploading'>` - Collection state
+  
+  ```javascript
+  uploader.addEventListener('common-upload-start', (e) => {
+    console.log('Uploading:', e.detail.uploadingCount, 'files');
+  });
+  ```
+</ParamField>
+
+<ParamField path="common-upload-progress" type="CustomEvent">
+  Fired during batch upload to report overall progress.
+  
+  **Detail**: `OutputCollectionState<'uploading'>` - Collection state with progress
+  
+  ```javascript
+  uploader.addEventListener('common-upload-progress', (e) => {
+    console.log('Total progress:', e.detail.progress);
+  });
+  ```
+</ParamField>
+
+<ParamField path="common-upload-success" type="CustomEvent">
+  Fired when all files in the collection upload successfully.
+  
+  **Detail**: `OutputCollectionState<'success'>` - Success state
+  
+  ```javascript
+  uploader.addEventListener('common-upload-success', (e) => {
+    console.log('All files uploaded:', e.detail.successCount);
+  });
+  ```
+</ParamField>
+
+<ParamField path="common-upload-failed" type="CustomEvent">
+  Fired when batch upload fails.
+  
+  **Detail**: `OutputCollectionState<'failed'>` - Failed state
+  
+  ```javascript
+  uploader.addEventListener('common-upload-failed', (e) => {
+    console.log('Failed files:', e.detail.failedCount);
+  });
+  ```
+</ParamField>
+
+<ParamField path="change" type="CustomEvent">
+  Fired whenever the collection state changes.
+  
+  **Detail**: `OutputCollectionState` - Current collection state
+  
+  ```javascript
+  uploader.addEventListener('change', (e) => {
+    console.log('State changed:', e.detail);
+  });
+  ```
+</ParamField>
+
+<ParamField path="group-created" type="CustomEvent">
+  Fired when files are grouped (when `groupOutput` is enabled).
+  
+  **Detail**: `OutputCollectionState<'success', 'has-group'>` - State with group info
+  
+  ```javascript
+  uploader.addEventListener('group-created', (e) => {
+    console.log('Group URL:', e.detail.groupInfo.cdnUrl);
+  });
+  ```
+</ParamField>
+
+### UI Events
+
+<ParamField path="modal-open" type="CustomEvent">
+  Fired when a modal opens.
+  
+  **Detail**: `{ modalId: string }` - Modal identifier
+  
+  ```javascript
+  uploader.addEventListener('modal-open', (e) => {
+    console.log('Modal opened:', e.detail.modalId);
+  });
+  ```
+</ParamField>
+
+<ParamField path="modal-close" type="CustomEvent">
+  Fired when a modal closes.
+  
+  **Detail**: `{ modalId: string, hasActiveModals: boolean }`
+  
+  ```javascript
+  uploader.addEventListener('modal-close', (e) => {
+    console.log('Modal closed:', e.detail.modalId);
+  });
+  ```
+</ParamField>
+
+<ParamField path="activity-change" type="CustomEvent">
+  Fired when the active activity (screen) changes.
+  
+  **Detail**: `{ activity: string }` - Activity name
+  
+  ```javascript
+  uploader.addEventListener('activity-change', (e) => {
+    console.log('Activity:', e.detail.activity);
+  });
+  ```
+</ParamField>
+
+<ParamField path="upload-click" type="CustomEvent">
+  Fired when the upload button is clicked (when `confirmUpload` is true).
+  
+  **Detail**: `undefined`
+  
+  ```javascript
+  uploader.addEventListener('upload-click', () => {
+    console.log('Upload button clicked');
+  });
+  ```
+</ParamField>
+
+<ParamField path="done-click" type="CustomEvent">
+  Fired when the done button is clicked after successful upload.
+  
+  **Detail**: `OutputCollectionState` - Final collection state
+  
+  ```javascript
+  uploader.addEventListener('done-click', (e) => {
+    console.log('Upload completed:', e.detail);
+    console.log('Successful files:', e.detail.successEntries);
+  });
+  ```
+</ParamField>
+
+## TypeScript Support
+
+The component provides full TypeScript support with typed event listeners:
+
+```typescript
+import type { UploadCtxProvider } from '@uploadcare/file-uploader';
+
+const uploader = document.querySelector('uc-upload-ctx-provider') as UploadCtxProvider;
+
+uploader.addEventListener('file-upload-success', (e) => {
+  // e.detail is properly typed as OutputFileEntry<'success'>
+  console.log(e.detail.cdnUrl);
+  console.log(e.detail.uuid);
+});
+```
+
+## Event Access
+
+Event type constants are available on the class:
+
+```javascript
+import { UploadCtxProvider } from '@uploadcare/file-uploader';
+
+console.log(UploadCtxProvider.EventType.FILE_ADDED); // 'file-added'
+console.log(UploadCtxProvider.EventType.DONE_CLICK); // 'done-click'
+```
+
+## Complete Example
+
+```html
+<!DOCTYPE html>
+<html>
+<head>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@uploadcare/file-uploader@1/web/uc-file-uploader-regular.min.css">
+</head>
+<body>
+  <uc-upload-ctx-provider ctx-name="my-uploader" id="uploader"></uc-upload-ctx-provider>
+  <uc-config ctx-name="my-uploader" pubkey="demopublickey"></uc-config>
+  <uc-file-uploader-regular ctx-name="my-uploader"></uc-file-uploader-regular>
+  
+  <script type="module">
+    import * as UC from 'https://cdn.jsdelivr.net/npm/@uploadcare/file-uploader@1/web/file-uploader.min.js';
+    UC.defineComponents(UC);
+    
+    const uploader = document.getElementById('uploader');
+    
+    uploader.addEventListener('file-added', (e) => {
+      console.log('📁 File added:', e.detail.name);
+    });
+    
+    uploader.addEventListener('file-upload-progress', (e) => {
+      console.log('⏳ Progress:', e.detail.name, `${e.detail.progress}%`);
+    });
+    
+    uploader.addEventListener('file-upload-success', (e) => {
+      console.log('✅ Success:', e.detail.cdnUrl);
+    });
+    
+    uploader.addEventListener('done-click', (e) => {
+      console.log('🎉 All done!', e.detail.successEntries);
+    });
+  </script>
+</body>
+</html>
+```
+
+## Source Code Reference
+
+Implementation: `/workspace/source/src/blocks/UploadCtxProvider/UploadCtxProvider.ts:7`
+
+Event definitions: `/workspace/source/src/blocks/UploadCtxProvider/EventEmitter.ts:16`
+
+## See Also
+
+- [Config](/components/config) - Configuration component
+- [UploadList](/components/upload-list) - File list display
+- [DropArea](/components/drop-area) - File drop zone

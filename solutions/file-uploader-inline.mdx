@@ -1,0 +1,234 @@
+---
+title: 'FileUploaderInline'
+description: 'Inline file uploader embedded directly in your page without modal dialogs'
+icon: 'rectangle-wide'
+---
+
+## Overview
+
+The `FileUploaderInline` component provides an inline file upload interface that embeds directly into your page layout. Unlike FileUploaderRegular, it displays all upload activities inline without modal dialogs, making it ideal for seamless integration into your page flow.
+
+## When to use
+
+Use `FileUploaderInline` when you need:
+
+- An embedded upload interface that doesn't use modal dialogs
+- Upload functionality that feels like a natural part of your page
+- Direct visibility of upload sources and progress
+- More control over the layout and positioning
+- A streamlined user experience without modal interruptions
+
+## Basic usage
+
+<CodeGroup>
+
+```html CDN
+<script type="module">
+  import * as UC from 'https://cdn.jsdelivr.net/npm/@uploadcare/file-uploader@1/web/uc-file-uploader-inline.min.js';
+  UC.defineComponents(UC);
+</script>
+
+<link
+  rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/@uploadcare/file-uploader@1/web/uc-file-uploader-inline.min.css"
+/>
+
+<uc-file-uploader-inline ctx-name="my-uploader"></uc-file-uploader-inline>
+<uc-config ctx-name="my-uploader" pubkey="YOUR_PUBLIC_KEY"></uc-config>
+```
+
+```javascript NPM
+import * as UC from '@uploadcare/file-uploader';
+import '@uploadcare/file-uploader/web/uc-file-uploader-inline.min.css';
+
+UC.defineComponents(UC);
+```
+
+```html Markup
+<uc-file-uploader-inline ctx-name="my-uploader"></uc-file-uploader-inline>
+<uc-config ctx-name="my-uploader" pubkey="YOUR_PUBLIC_KEY"></uc-config>
+```
+
+</CodeGroup>
+
+<Note>
+  Note that `FileUploaderInline` doesn't require `uc-upload-ctx-provider` - the component manages its own context.
+</Note>
+
+## Features
+
+### Inline interface
+
+All upload activities are displayed inline within the component bounds:
+
+- Drop area with file selection
+- Source list for alternative upload methods
+- Upload progress and file list
+- Camera, URL, and external source interfaces
+- Image editor integration
+
+### Automatic view switching
+
+The component automatically switches between views based on the upload state:
+
+1. **Start From** - Initial state showing drop area and upload sources
+2. **Upload List** - Automatically shown when files are added
+3. **Source Activities** - Displayed when selecting alternative upload sources
+
+### Cancel button
+
+An optional cancel button appears when:
+- Navigating through source activities (can go back)
+- Files are present in the upload list (can return to list)
+
+```html
+<uc-file-uploader-inline ctx-name="my-uploader"></uc-file-uploader-inline>
+```
+
+## Attributes
+
+### `ctx-name`
+
+<ParamField path="ctx-name" type="string" required>
+  The context name that links the uploader with its configuration. Must match the `ctx-name` in `uc-config`.
+</ParamField>
+
+## Configuration options
+
+Configure the inline uploader through the `uc-config` component:
+
+<Tabs>
+  <Tab title="With image editing">
+    ```html
+    <uc-file-uploader-inline ctx-name="my-uploader"></uc-file-uploader-inline>
+    <uc-config
+      ctx-name="my-uploader"
+      pubkey="YOUR_PUBLIC_KEY"
+      crop-preset="1:1"
+      cloud-image-editor-tabs="crop"
+    ></uc-config>
+    ```
+  </Tab>
+  <Tab title="Multiple files">
+    ```html
+    <uc-file-uploader-inline ctx-name="my-uploader"></uc-file-uploader-inline>
+    <uc-config
+      ctx-name="my-uploader"
+      pubkey="YOUR_PUBLIC_KEY"
+      multiple
+      multiple-max="20"
+    ></uc-config>
+    ```
+  </Tab>
+  <Tab title="Custom sources">
+    ```html
+    <uc-file-uploader-inline ctx-name="my-uploader"></uc-file-uploader-inline>
+    <uc-config
+      ctx-name="my-uploader"
+      pubkey="YOUR_PUBLIC_KEY"
+      source-list="local, url, camera, dropbox, gdrive"
+    ></uc-config>
+    ```
+  </Tab>
+</Tabs>
+
+## Initial activity
+
+Control which view is shown initially using CSS custom properties:
+
+```html
+<style>
+  uc-file-uploader-inline {
+    --cfg-init-activity: 'upload-list';
+  }
+</style>
+```
+
+Available activities:
+- `start-from` (default) - Show upload sources
+- `upload-list` - Show file list if files are present
+
+## Styling
+
+The inline uploader can be styled to fit your page layout:
+
+```html
+<style>
+  uc-file-uploader-inline {
+    max-width: 600px;
+    margin: 0 auto;
+  }
+</style>
+
+<uc-file-uploader-inline ctx-name="my-uploader"></uc-file-uploader-inline>
+```
+
+### Theme classes
+
+```html
+<uc-file-uploader-inline class="uc-light" ctx-name="my-uploader"></uc-file-uploader-inline>
+```
+
+```html
+<uc-file-uploader-inline class="uc-dark" ctx-name="my-uploader"></uc-file-uploader-inline>
+```
+
+## Layout considerations
+
+Since the component is inline, consider these layout aspects:
+
+<AccordionGroup>
+  <Accordion title="Container width">
+    The component will fill its container width. Set a max-width if needed:
+    ```css
+    uc-file-uploader-inline {
+      max-width: 800px;
+    }
+    ```
+  </Accordion>
+  <Accordion title="Height transitions">
+    The component height changes based on the active view. Ensure your layout can accommodate these changes smoothly.
+  </Accordion>
+  <Accordion title="Responsive design">
+    The inline uploader is responsive by default. Test on mobile devices to ensure proper behavior.
+  </Accordion>
+</AccordionGroup>
+
+## Events
+
+Listen to upload events to integrate with your application:
+
+```javascript
+const uploader = document.querySelector('uc-file-uploader-inline');
+
+uploader.addEventListener('file-upload-success', (e) => {
+  console.log('Upload completed:', e.detail);
+});
+
+uploader.addEventListener('change', (e) => {
+  console.log('Files changed:', e.detail);
+});
+```
+
+## Comparison with other solutions
+
+<CardGroup cols={2}>
+  <Card title="FileUploaderRegular" icon="window-maximize" href="/solutions/file-uploader-regular">
+    Modal-based interface with separate dialog windows
+  </Card>
+  <Card title="FileUploaderMinimal" icon="minimize" href="/solutions/file-uploader-minimal">
+    Compact uploader with minimal UI footprint
+  </Card>
+</CardGroup>
+
+## Use cases
+
+- **Profile pages** - Inline avatar upload without disrupting the page flow
+- **Content creation** - Embed file uploads in forms or editors
+- **Dashboard widgets** - Integrate uploads within complex layouts
+- **Mobile-first apps** - Seamless experience without modal overlays
+
+## Related components
+
+- [Config](/components/config) - Configure uploader behavior
+- [CloudImageEditor](/solutions/cloud-image-editor) - Standalone image editor

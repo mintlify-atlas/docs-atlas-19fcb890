@@ -1,0 +1,412 @@
+---
+title: UrlSource
+description: Import files from external URLs directly into your upload collection
+---
+
+The `UrlSource` component provides a simple interface for importing files from external URLs. Users enter a URL, and the file is fetched and added to the upload collection.
+
+## Overview
+
+UrlSource extends `LitUploaderBlock` and creates a form-based interface for URL input. It handles URL validation, displays appropriate feedback, and automatically transitions to the upload list after adding a file.
+
+## Basic Usage
+
+```html
+<uc-url-source ctx-name="my-uploader"></uc-url-source>
+```
+
+Typically accessed through the source list:
+
+```html
+<uc-config source-list="local, url"></uc-config>
+<uc-source-list></uc-source-list>
+```
+
+## User Interface
+
+The component displays:
+- **Header** - "From URL" title with back and close buttons
+- **Input field** - Text input for URL entry
+- **Upload button** - Submit button (disabled until URL is entered)
+
+## Workflow
+
+1. User navigates to URL source
+2. Input field is automatically focused
+3. User enters or pastes a URL
+4. User clicks "Upload" or presses Enter
+5. File is fetched from URL and added to collection
+6. User is redirected to upload list
+
+## Features
+
+### Auto-focus
+
+The input field is automatically focused when the activity opens:
+
+```javascript
+// On activation:
+input.value = '';
+input.focus();
+```
+
+### Button State Management
+
+The upload button is disabled until a URL is entered:
+
+```html
+<input 
+  type="text" 
+  placeholder="https://" 
+  @input=${handleInput}
+/>
+<button 
+  type="submit"
+  ?disabled=${!hasUrl}
+>Upload</button>
+```
+
+### URL Trimming
+
+Whitespace is automatically trimmed from URLs:
+
+```javascript
+const url = input.value.trim();
+// "  https://example.com/image.jpg  " becomes
+// "https://example.com/image.jpg"
+```
+
+## Supported URL Formats
+
+The component accepts any valid URL string. Uploadcare's backend handles:
+
+- **Direct file URLs** - `https://example.com/image.jpg`
+- **HTTP/HTTPS** - Both protocols supported
+- **Various file types** - Images, videos, documents, etc.
+
+<Note>
+  URL must be publicly accessible. Files behind authentication or CORS restrictions may fail to import.
+</Note>
+
+## Example URLs
+
+```
+https://example.com/photo.jpg
+https://cdn.example.com/documents/report.pdf
+https://images.example.com/gallery/image-1.png
+https://example.com/videos/demo.mp4
+```
+
+## Events
+
+URL imports trigger standard upload events:
+
+```javascript
+const uploader = document.querySelector('uc-upload-ctx-provider');
+
+uploader.addEventListener('file-added', (e) => {
+  if (e.detail.source === 'url') {
+    console.log('File from URL:', e.detail.name);
+    console.log('Original URL:', e.detail.originalUrl);
+  }
+});
+
+uploader.addEventListener('file-upload-success', (e) => {
+  console.log('Imported file CDN URL:', e.detail.cdnUrl);
+});
+```
+
+## Integration Example
+
+### Basic Setup
+
+```html
+<uc-upload-ctx-provider ctx-name="my-uploader"></uc-upload-ctx-provider>
+<uc-config 
+  ctx-name="my-uploader"
+  pubkey="YOUR_PUBLIC_KEY"
+  source-list="url"
+></uc-config>
+<uc-file-uploader-regular ctx-name="my-uploader"></uc-file-uploader-regular>
+```
+
+### With Multiple Sources
+
+```html
+<uc-config 
+  ctx-name="my-uploader"
+  pubkey="YOUR_KEY"
+  source-list="local, url, camera"
+></uc-config>
+```
+
+### URL-Only Uploader
+
+```html
+<!DOCTYPE html>
+<html>
+<head>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@uploadcare/file-uploader@1/web/uc-file-uploader-regular.min.css">
+</head>
+<body>
+  <uc-upload-ctx-provider ctx-name="url-uploader" id="uploader"></uc-upload-ctx-provider>
+  <uc-config 
+    ctx-name="url-uploader"
+    pubkey="demopublickey"
+    source-list="url"
+  ></uc-config>
+  <uc-file-uploader-regular ctx-name="url-uploader"></uc-file-uploader-regular>
+  
+  <script type="module">
+    import * as UC from 'https://cdn.jsdelivr.net/npm/@uploadcare/file-uploader@1/web/file-uploader.min.js';
+    UC.defineComponents(UC);
+    
+    const uploader = document.getElementById('uploader');
+    
+    uploader.addEventListener('file-upload-success', (e) => {
+      console.log('URL imported successfully:', e.detail.cdnUrl);
+    });
+    
+    uploader.addEventListener('file-upload-failed', (e) => {
+      console.error('URL import failed:', e.detail.error);
+    });
+  </script>
+</body>
+</html>
+```
+
+### Handling Import Results
+
+```javascript
+const uploader = document.querySelector('uc-upload-ctx-provider');
+
+uploader.addEventListener('file-added', (e) => {
+  if (e.detail.source === 'url') {
+    console.log('Importing from URL...');
+    showSpinner();
+  }
+});
+
+uploader.addEventListener('file-upload-success', (e) => {
+  hideSpinner();
+  console.log('Success! New CDN URL:', e.detail.cdnUrl);
+  
+  // Use the imported file
+  const img = document.createElement('img');
+  img.src = e.detail.cdnUrl + '-/preview/800x800/';
+  document.body.appendChild(img);
+});
+
+uploader.addEventListener('file-upload-failed', (e) => {
+  hideSpinner();
+  console.error('Import failed:', e.detail.error);
+  showError('Failed to import file from URL');
+});
+```
+
+## Error Handling
+
+Common error scenarios:
+
+### Invalid URL
+
+```javascript
+// URL format validation happens on backend
+// Client only checks if input is not empty
+```
+
+### URL Not Accessible
+
+```javascript
+// Triggers file-upload-failed event
+uploader.addEventListener('file-upload-failed', (e) => {
+  if (e.detail.source === 'url') {
+    // Could be:
+    // - URL not found (404)
+    // - Access denied (403)
+    // - CORS issues
+    // - Network errors
+    console.error('Cannot access URL:', e.detail.error);
+  }
+});
+```
+
+### File Type Not Allowed
+
+```html
+<uc-config accept="image/*"></uc-config>
+```
+
+```javascript
+// If URL points to non-image file, validation fails
+uploader.addEventListener('file-upload-failed', (e) => {
+  console.error('File type not allowed');
+});
+```
+
+## Configuration Options
+
+### Check for URL Duplicates
+
+```html
+<uc-config check-for-url-duplicates="true"></uc-config>
+```
+
+Prevents importing the same URL multiple times.
+
+### Save URL for Recurrent Uploads
+
+```html
+<uc-config save-url-for-recurrent-uploads="true"></uc-config>
+```
+
+Optimizes repeated imports of the same URL.
+
+### File Type Restrictions
+
+```html
+<uc-config accept="image/*,video/*"></uc-config>
+```
+
+Only allows importing images and videos from URLs.
+
+### Maximum File Size
+
+```html
+<uc-config max-local-file-size-bytes="52428800"></uc-config>
+```
+
+Rejects URL imports larger than specified size (50MB in this example).
+
+## Advanced Usage
+
+### Pre-fill URL Programmatically
+
+While the component clears the input on activation, you can trigger URL import programmatically:
+
+```javascript
+const config = document.querySelector('uc-config');
+const api = config.api;
+
+// Add file from URL programmatically
+api.addFileFromUrl('https://example.com/image.jpg', {
+  source: 'url'
+});
+```
+
+### Batch URL Import
+
+```javascript
+const urls = [
+  'https://example.com/image1.jpg',
+  'https://example.com/image2.jpg',
+  'https://example.com/image3.jpg'
+];
+
+const api = document.querySelector('uc-config').api;
+
+urls.forEach(url => {
+  api.addFileFromUrl(url, { source: 'url' });
+});
+
+// Files are added to upload list
+```
+
+## Accessibility
+
+### Form Semantics
+
+The component uses proper form structure:
+
+```html
+<form @submit=${handleSubmit}>
+  <label>
+    <input type="text" placeholder="https://" />
+  </label>
+  <button type="submit">Upload</button>
+</form>
+```
+
+### Keyboard Support
+
+- **Tab** - Navigate between input and button
+- **Enter** - Submit form (when input is focused)
+- **Escape** - Close modal (when in modal context)
+
+### Screen Reader Support
+
+Add labels for better accessibility:
+
+```html
+<label for="url-input">Enter file URL</label>
+<input id="url-input" type="text" placeholder="https://" />
+```
+
+## Styling
+
+Customize the URL source interface:
+
+```css
+uc-url-source .uc-url-input {
+  font-size: 16px;
+  padding: 12px;
+  border: 2px solid #ddd;
+  border-radius: 4px;
+  width: 100%;
+}
+
+uc-url-source .uc-url-input:focus {
+  border-color: #0078ff;
+  outline: none;
+}
+
+uc-url-source .uc-url-upload-btn {
+  margin-top: 16px;
+  width: 100%;
+}
+
+uc-url-source .uc-url-upload-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+```
+
+## Use Cases
+
+### Import Social Media Images
+
+```javascript
+// Import from social media CDNs
+api.addFileFromUrl('https://pbs.twimg.com/media/example.jpg');
+api.addFileFromUrl('https://instagram.com/p/example/media/');
+```
+
+### Import from Cloud Storage
+
+```javascript
+// Import publicly accessible cloud files
+api.addFileFromUrl('https://storage.googleapis.com/bucket/file.pdf');
+api.addFileFromUrl('https://s3.amazonaws.com/bucket/document.docx');
+```
+
+### Migrate from Another CDN
+
+```javascript
+// Migrate files from another CDN to Uploadcare
+const oldCdnUrls = [
+  'https://old-cdn.com/file1.jpg',
+  'https://old-cdn.com/file2.jpg'
+];
+
+oldCdnUrls.forEach(url => api.addFileFromUrl(url));
+```
+
+## Source Code Reference
+
+Implementation: `/workspace/source/src/blocks/UrlSource/UrlSource.ts:17`
+
+## See Also
+
+- [Config](/components/config) - Configure URL import behavior
+- [SourceList](/components/source-list) - Source selection
+- [UploadList](/components/upload-list) - Manage imported files

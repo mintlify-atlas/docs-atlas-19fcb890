@@ -1,0 +1,384 @@
+---
+title: Configuration System
+description: Deep dive into the File Uploader configuration architecture and how to customize behavior
+---
+
+The File Uploader uses a powerful configuration system that allows you to customize every aspect of the uploader's behavior. Configuration is handled through the `Config` block, which manages options via attributes, properties, and reactive state.
+
+## How Configuration Works
+
+Configuration in the File Uploader follows a reactive architecture:
+
+1. **Configuration options** are defined with default values
+2. **Changes propagate** through the component tree automatically
+3. **Computed properties** derive values from other configuration options
+4. **Validation** ensures configuration consistency
+
+### The Config Block
+
+The `Config` block is a special component that acts as the central configuration hub:
+
+```typescript
+import { Config } from '@uploadcare/file-uploader';
+
+// Config automatically syncs between:
+// - DOM attributes (kebab-case)
+// - JavaScript properties (camelCase)
+// - Internal state
+```
+
+From `src/blocks/Config/Config.ts:55-65`:
+
+```typescript
+export class Config extends LitBlock {
+  public override init$ = {
+    ...this.init$,
+    ...Object.fromEntries(
+      Object.entries(initialConfig).map(([key, value]) => 
+        [sharedConfigKey(key as keyof ConfigType), value]
+      ),
+    ),
+  } as unknown as LitBlock['init$'] & ConfigType;
+}
+```
+
+## Configuration Options
+
+### Basic Options
+
+These are the fundamental configuration options for the uploader:
+
+<CardGroup cols={2}>
+  <Card title="pubkey" icon="key">
+    Your project's Public Key (required)
+    
+    ```javascript
+    pubkey: 'your_public_key'
+    ```
+  </Card>
+  
+  <Card title="multiple" icon="files">
+    Allow multiple file uploads
+    
+    ```javascript
+    multiple: true
+    ```
+  </Card>
+  
+  <Card title="imgOnly" icon="image">
+    Restrict uploads to images only
+    
+    ```javascript
+    imgOnly: false
+    ```
+  </Card>
+  
+  <Card title="store" icon="database">
+    Control file storage behavior
+    
+    ```javascript
+    store: 'auto' // or true/false
+    ```
+  </Card>
+</CardGroup>
+
+### Upload Sources
+
+Control which upload sources are available:
+
+```javascript
+sourceList: 'local, url, camera, dropbox, gdrive'
+```
+
+Available sources:
+- `local` - Local file system
+- `url` - Upload from URL
+- `camera` - Camera/webcam capture
+- `dropbox` - Dropbox integration
+- `gdrive` - Google Drive integration
+- Plus more external sources
+
+From `src/blocks/Config/initialConfig.ts:24`:
+
+```typescript
+sourceList: 'local, url, camera, dropbox, gdrive',
+```
+
+### File Size and Type Restrictions
+
+```javascript
+{
+  maxLocalFileSizeBytes: 0, // 0 means no limit
+  accept: '', // MIME types or extensions
+  multipleMin: 0,
+  multipleMax: Number.MAX_SAFE_INTEGER
+}
+```
+
+### Upload Behavior
+
+```javascript
+{
+  confirmUpload: false, // Require user confirmation
+  multipartMinFileSize: 26214400, // 25 MB
+  multipartChunkSize: 5242880, // 5 MB
+  maxConcurrentRequests: 10,
+  multipartMaxConcurrentRequests: 4,
+  retryThrottledRequestMaxTimes: 3,
+  retryNetworkErrorMaxTimes: 3
+}
+```
+
+### Image Editing
+
+```javascript
+{
+  useCloudImageEditor: true,
+  cloudImageEditorTabs: 'crop, tuning, filters',
+  cloudImageEditorAutoOpen: false,
+  useLocalImageEditor: false,
+  cropPreset: '', // e.g., '1:1' or '16:9'
+  imageShrink: ''
+}
+```
+
+### Camera Options
+
+From `src/blocks/Config/initialConfig.ts:22-23` and `75-80`:
+
+```javascript
+{
+  cameraMirror: false,
+  cameraCapture: '', // 'user' or 'environment'
+  cameraModes: 'photo, video',
+  defaultCameraMode: null,
+  enableAudioRecording: true,
+  enableVideoRecording: null,
+  maxVideoRecordingDuration: null
+}
+```
+
+## Plain vs Complex Configuration
+
+Configuration options are divided into two categories:
+
+### Plain Configuration
+
+Options that can be set via HTML attributes (strings, numbers, booleans):
+
+```html
+<uc-config
+  pubkey="your_key"
+  multiple="true"
+  max-local-file-size-bytes="52428800"
+  source-list="local, url, camera"
+></uc-config>
+```
+
+### Complex Configuration
+
+Options that require objects or functions (must be set via JavaScript):
+
+From `src/blocks/Config/Config.ts:20-29`:
+
+```typescript
+export const complexConfigKeys = [
+  'metadata',
+  'localeDefinitionOverride',
+  'secureUploadsSignatureResolver',
+  'secureDeliveryProxyUrlResolver',
+  'iconHrefResolver',
+  'fileValidators',
+  'collectionValidators',
+  'mediaRecorderOptions',
+] as const;
+```
+
+#### Metadata
+
+Attach custom metadata to uploaded files:
+
+```javascript
+config.metadata = {
+  userId: '12345',
+  source: 'web-app'
+};
+
+// Or use a callback for dynamic metadata
+config.metadata = (fileEntry) => {
+  return {
+    fileName: fileEntry.name,
+    uploadedAt: new Date().toISOString()
+  };
+};
+```
+
+#### File Validators
+
+Add custom validation rules:
+
+```javascript
+config.fileValidators = [
+  (fileEntry) => {
+    if (fileEntry.size > 10 * 1024 * 1024) {
+      return { message: 'File too large (max 10MB)' };
+    }
+  }
+];
+```
+
+#### Secure Uploads
+
+```javascript
+config.secureUploadsSignatureResolver = async () => {
+  const response = await fetch('/api/uploadcare-signature');
+  const { signature, expire } = await response.json();
+  return {
+    secureSignature: signature,
+    secureExpire: expire
+  };
+};
+```
+
+## Computed Properties
+
+Some configuration options are automatically computed based on other options.
+
+From `src/blocks/Config/computed-properties.ts:33-48`:
+
+```typescript
+defineComputedProperty({
+  key: 'cameraModes',
+  deps: ['enableVideoRecording'] as const,
+  fn: ({ cameraModes, enableVideoRecording }) => {
+    if (enableVideoRecording === null) {
+      return cameraModes;
+    }
+    let cameraModesCsv = deserializeCsv(cameraModes);
+    if (enableVideoRecording && !cameraModesCsv.includes('video')) {
+      cameraModesCsv = cameraModesCsv.concat('video');
+    } else if (!enableVideoRecording) {
+      cameraModesCsv = cameraModesCsv.filter((mode) => mode !== 'video');
+    }
+    return serializeCsv(cameraModesCsv);
+  },
+})
+```
+
+This means when you set `enableVideoRecording`, the `cameraModes` option updates automatically.
+
+## Setting Configuration
+
+### Via HTML Attributes
+
+```html
+<uc-file-uploader-regular
+  pubkey="your_public_key"
+  multiple="true"
+  source-list="local, camera"
+  max-local-file-size-bytes="52428800"
+>
+</uc-file-uploader-regular>
+```
+
+### Via JavaScript Properties
+
+```javascript
+const uploader = document.querySelector('uc-file-uploader-regular');
+
+uploader.pubkey = 'your_public_key';
+uploader.multiple = true;
+uploader.sourceList = 'local, camera';
+```
+
+### Via uc-config Block
+
+```html
+<uc-file-uploader-regular>
+  <uc-config
+    ctx-name="my-uploader"
+    pubkey="your_public_key"
+    multiple="true"
+  ></uc-config>
+</uc-file-uploader-regular>
+```
+
+### Programmatic Access
+
+```javascript
+const uploader = document.querySelector('uc-file-uploader-regular');
+const api = uploader.getAPI();
+
+// Read configuration
+console.log(api.cfg.multiple);
+
+// Modify configuration
+api.cfg.multiple = false;
+```
+
+## Configuration Context
+
+Configuration is shared across all components in the same context using a reactive state system:
+
+<Note>
+  All components within a solution automatically share the same configuration context. Changes to configuration propagate immediately to all components.
+</Note>
+
+From `src/blocks/Config/Config.ts:83-92`:
+
+```typescript
+private _flushValueToState<TKey extends keyof ConfigType>(
+  key: TKey, 
+  value: unknown
+) {
+  if (this.$[sharedConfigKey(key)] !== value) {
+    if (typeof value === 'undefined' || value === null) {
+      this.$[sharedConfigKey(key)] = initialConfig[key];
+    } else {
+      this.$[sharedConfigKey(key)] = value;
+    }
+  }
+}
+```
+
+## Debug Mode
+
+Enable debug mode to see configuration changes in the console:
+
+```javascript
+config.debug = true;
+```
+
+This will log all configuration changes with detailed information.
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Set configuration early">
+    Set all configuration options before the uploader initializes to avoid multiple reconfigurations.
+  </Accordion>
+  
+  <Accordion title="Use type-safe setters">
+    When using TypeScript, leverage the type definitions to ensure configuration correctness.
+  </Accordion>
+  
+  <Accordion title="Validate custom validators">
+    Always test custom file validators thoroughly to ensure they handle edge cases.
+  </Accordion>
+  
+  <Accordion title="Don't mutate complex objects">
+    When updating complex configuration like metadata or validators, create new objects rather than mutating existing ones.
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Component Architecture" icon="cubes" href="/concepts/components">
+    Learn how components work together
+  </Card>
+  
+  <Card title="Solutions Overview" icon="puzzle-piece" href="/concepts/solutions">
+    Explore pre-built solution packages
+  </Card>
+</CardGroup>

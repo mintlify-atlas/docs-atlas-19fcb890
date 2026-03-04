@@ -1,0 +1,583 @@
+---
+title: Styling and Theming
+description: Customize the appearance of your file uploader with CSS variables, themes, and custom styles
+---
+
+The File Uploader is built with a comprehensive theming system based on CSS custom properties (variables). You can customize colors, spacing, typography, and more without writing complex CSS.
+
+## Quick Start
+
+Apply a pre-built theme using CSS classes:
+
+```html
+<uc-file-uploader-regular class="uc-dark uc-purple"></uc-file-uploader-regular>
+```
+
+## CSS Architecture
+
+The styling system uses CSS layers for predictable cascade control:
+
+```css
+/* Source: src/blocks/themes/uc-basic/theme.css */
+@layer uc.base {
+  :where([uc-wgt-common]) {
+    /* All theme variables are defined here */
+  }
+}
+```
+
+The `:where()` selector keeps specificity low, making overrides easy.
+
+## Color System
+
+The library uses a semantic color system with automatic light/dark mode support.
+
+### Color Variables
+
+<Tabs>
+  <Tab title="Primary Colors">
+    ```css
+    --uc-primary              /* Main brand color */
+    --uc-primary-hover        /* Hover state */
+    --uc-primary-transparent  /* Transparent variant */
+    --uc-primary-foreground   /* Text on primary color */
+    ```
+  </Tab>
+  
+  <Tab title="Background & Text">
+    ```css
+    --uc-background           /* Main background */
+    --uc-foreground           /* Main text color */
+    --uc-muted                /* Muted background */
+    --uc-muted-foreground     /* Muted text */
+    ```
+  </Tab>
+  
+  <Tab title="Interactive">
+    ```css
+    --uc-secondary            /* Secondary button background */
+    --uc-secondary-hover      /* Secondary hover state */
+    --uc-secondary-foreground /* Secondary button text */
+    --uc-simple-btn           /* Simple button background */
+    --uc-simple-btn-hover     /* Simple button hover */
+    --uc-simple-btn-foreground /* Simple button text */
+    ```
+  </Tab>
+  
+  <Tab title="Status">
+    ```css
+    --uc-destructive          /* Error/delete background */
+    --uc-destructive-foreground /* Error/delete text */
+    --uc-border               /* Border color */
+    ```
+  </Tab>
+</Tabs>
+
+### Color Space Support
+
+The theme uses modern OKLCH color space with RGB fallbacks:
+
+```css
+/* Source: src/blocks/themes/uc-basic/theme.css:93-136 */
+@supports (color: oklch(0% 0 0)) {
+  :where([uc-wgt-common]) {
+    /* Modern browsers: OKLCH colors */
+    --uc-primary-oklch-light: 47% 0.22 264;
+    --uc-primary-light: oklch(var(--uc-primary-oklch-light));
+    --uc-primary-hover-light: oklch(var(--uc-primary-oklch-light) / 90%);
+    --uc-background-light: oklch(100% 0 0);
+    --uc-foreground-light: oklch(21% 0 0);
+    /* ... */
+  }
+}
+
+@supports not (color: oklch(0% 0 0)) {
+  :where([uc-wgt-common]) {
+    /* Fallback: RGB colors */
+    --uc-primary-rgb-light: 23 75 215;
+    --uc-primary-light: rgb(var(--uc-primary-rgb-light));
+    --uc-primary-hover-light: rgb(var(--uc-primary-rgb-light) / 90%);
+    --uc-background-light: rgb(255 255 255);
+    --uc-foreground-light: rgb(24 24 24);
+    /* ... */
+  }
+}
+```
+
+## Pre-built Themes
+
+### Color Themes
+
+Apply color themes with CSS classes:
+
+```html
+<!-- Blue (default) -->
+<uc-file-uploader-regular></uc-file-uploader-regular>
+
+<!-- Purple -->
+<uc-file-uploader-regular class="uc-purple"></uc-file-uploader-regular>
+
+<!-- Red -->
+<uc-file-uploader-regular class="uc-red"></uc-file-uploader-regular>
+
+<!-- Orange -->
+<uc-file-uploader-regular class="uc-orange"></uc-file-uploader-regular>
+
+<!-- Green -->
+<uc-file-uploader-regular class="uc-green"></uc-file-uploader-regular>
+
+<!-- Turquoise -->
+<uc-file-uploader-regular class="uc-turquoise"></uc-file-uploader-regular>
+
+<!-- Gray -->
+<uc-file-uploader-regular class="uc-gray"></uc-file-uploader-regular>
+```
+
+**Color Theme Definitions:**
+
+```css
+/* Source: src/blocks/themes/uc-basic/theme.css:247-276 */
+:where(.uc-purple) {
+  --uc-primary-oklch-light: 47% 0.22 300;
+  --uc-primary-oklch-dark: 69% 0.1768 300;
+}
+
+:where(.uc-red) {
+  --uc-primary-oklch-light: 47% 0.21 21;
+  --uc-primary-oklch-dark: 71% 0.1768 21;
+}
+
+:where(.uc-orange) {
+  --uc-primary-oklch-light: 47% 0.1376 51.88;
+  --uc-primary-oklch-dark: 69% 0.1768 51.88;
+}
+
+:where(.uc-green) {
+  --uc-primary-oklch-light: 45% 0.14 130;
+  --uc-primary-oklch-dark: 69% 0.1768 130;
+}
+```
+
+### Light and Dark Modes
+
+```html
+<!-- Force light mode -->
+<uc-file-uploader-regular class="uc-light"></uc-file-uploader-regular>
+
+<!-- Force dark mode -->
+<uc-file-uploader-regular class="uc-dark"></uc-file-uploader-regular>
+
+<!-- Auto (respects system preference - default) -->
+<uc-file-uploader-regular></uc-file-uploader-regular>
+```
+
+**Mode Implementation:**
+
+```css
+/* Source: src/blocks/themes/uc-basic/theme.css:159-203 */
+@media (prefers-color-scheme: light) {
+  :where([uc-wgt-common]) {
+    --uc-background: var(--uc-background-light);
+    --uc-foreground: var(--uc-foreground-light);
+    --uc-primary: var(--uc-primary-light);
+    /* ... */
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  :where([uc-wgt-common]) {
+    --uc-background: var(--uc-background-dark);
+    --uc-foreground: var(--uc-foreground-dark);
+    --uc-primary: var(--uc-primary-dark);
+    /* ... */
+  }
+}
+```
+
+### High Contrast Theme
+
+```html
+<uc-file-uploader-regular class="uc-contrast"></uc-file-uploader-regular>
+```
+
+```css
+/* Source: src/blocks/themes/uc-basic/theme.css:277-292 */
+:where(.uc-contrast) {
+  --uc-border-light: oklch(50% 0 0);
+  --uc-border-dark: oklch(50% 0 0);
+  --uc-muted-light: oklch(98% 0 0);
+  --uc-muted-dark: oklch(16% 0 0);
+  --uc-muted-foreground-light: oklch(20% 0 0);
+  --uc-muted-foreground-dark: oklch(80% 0 0);
+  --uc-background-light: oklch(100% 0 0);
+  --uc-foreground-light: oklch(0% 0 0);
+  --uc-background-dark: oklch(10% 0 0);
+  --uc-foreground-dark: oklch(100% 0 0);
+}
+```
+
+## Layout Variables
+
+### Sizing
+
+```css
+/* Source: src/blocks/themes/uc-basic/theme.css:10-24 */
+:where([uc-wgt-common]) {
+  --uc-button-size: 32px;          /* Button height */
+  --uc-preview-size: 32px;         /* Thumbnail size */
+  --uc-padding: 10px;              /* Base padding */
+  --uc-radius: 8px;                /* Border radius */
+  --uc-transition: 0.2s ease;      /* Transition duration */
+  --uc-dialog-width: 430px;        /* Dialog default width */
+  --uc-dialog-max-width: 920px;    /* Dialog max width */
+  --uc-dialog-max-height: 675px;   /* Dialog max height */
+  --uc-simple-btn-padding: 7px 14px; /* Button padding */
+}
+```
+
+### Grid Layout
+
+```css
+--uc-grid-col: 3;                    /* Number of columns */
+--uc-grid-preview-image-height: auto; /* Image height */
+--uc-grid-gap: calc(var(--uc-padding) / 2); /* Gap between items */
+--uc-grid-aspect-ratio: 1 / 1;       /* Item aspect ratio */
+```
+
+### Typography
+
+```css
+--uc-font-family: system-ui;         /* Main font */
+--uc-font-size: 14px;                /* Base font size */
+--uc-line-height: normal;            /* Line height */
+--uc-simple-btn-font-family: system-ui; /* Button font */
+--uc-simple-btn-font-size: 14px;     /* Button font size */
+```
+
+## Custom Styling
+
+### Override CSS Variables
+
+The easiest way to customize is by overriding CSS variables:
+
+```html
+<style>
+  uc-file-uploader-regular {
+    /* Custom brand color */
+    --uc-primary-oklch-light: 55% 0.25 150;
+    --uc-primary-oklch-dark: 65% 0.18 150;
+    
+    /* Larger components */
+    --uc-button-size: 40px;
+    --uc-font-size: 16px;
+    
+    /* Rounded corners */
+    --uc-radius: 16px;
+    
+    /* Custom spacing */
+    --uc-padding: 16px;
+  }
+</style>
+
+<uc-file-uploader-regular></uc-file-uploader-regular>
+```
+
+### Complete Brand Theme
+
+```html
+<style>
+  .my-uploader {
+    /* Brand colors */
+    --uc-primary: #6366f1;
+    --uc-primary-hover: #4f46e5;
+    --uc-primary-foreground: #ffffff;
+    
+    /* Background colors */
+    --uc-background: #fafafa;
+    --uc-foreground: #171717;
+    --uc-border: #e5e5e5;
+    
+    /* Typography */
+    --uc-font-family: 'Inter', system-ui, sans-serif;
+    --uc-font-size: 15px;
+    
+    /* Layout */
+    --uc-radius: 12px;
+    --uc-padding: 12px;
+    --uc-button-size: 36px;
+    
+    /* Effects */
+    --uc-dialog-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
+                        0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  }
+</style>
+
+<uc-file-uploader-regular class="my-uploader"></uc-file-uploader-regular>
+```
+
+### Responsive Grid
+
+```html
+<style>
+  @media (max-width: 768px) {
+    uc-file-uploader-regular {
+      --uc-grid-col: 2;
+    }
+  }
+  
+  @media (max-width: 480px) {
+    uc-file-uploader-regular {
+      --uc-grid-col: 1;
+      --uc-dialog-max-width: 100vw;
+    }
+  }
+</style>
+```
+
+**Built-in Responsive Behavior:**
+
+```css
+/* Source: src/blocks/themes/uc-basic/theme.css:139-157 */
+@media only screen and (max-width: 680px) {
+  :where([uc-wgt-common]) {
+    --uc-grid-col: 2;
+  }
+}
+
+@media only screen and (max-width: 430px) {
+  :where([uc-wgt-common]) {
+    --uc-dialog-max-width: 100vw;
+    --uc-dialog-max-height: var(--uploadcare-blocks-window-height);
+    --uc-grid-col: 1;
+  }
+}
+```
+
+## Advanced Styling
+
+### Custom Component Styles
+
+Target specific components using CSS parts:
+
+```html
+<style>
+  /* Style the upload button */
+  uc-file-uploader-regular::part(upload-button) {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    font-weight: 600;
+  }
+  
+  /* Style file items */
+  uc-file-uploader-regular::part(file-item) {
+    border: 2px solid var(--uc-border);
+    border-radius: var(--uc-radius);
+  }
+</style>
+```
+
+### Shadow DOM Piercing
+
+For deeper customization, use CSS variables that pierce shadow boundaries:
+
+```html
+<style>
+  .custom-uploader {
+    /* These affect shadow DOM components */
+    --uc-button-size: 44px;
+    --uc-preview-size: 80px;
+    --uc-grid-aspect-ratio: 16 / 9;
+  }
+</style>
+```
+
+### Animation Customization
+
+```html
+<style>
+  uc-file-uploader-regular {
+    --uc-transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  /* Custom hover effects */
+  uc-file-uploader-regular button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+</style>
+```
+
+## Theme Combinations
+
+```html
+<!-- Dark mode with purple accent -->
+<uc-file-uploader-regular class="uc-dark uc-purple"></uc-file-uploader-regular>
+
+<!-- Light mode with high contrast and green accent -->
+<uc-file-uploader-regular class="uc-light uc-contrast uc-green"></uc-file-uploader-regular>
+
+<!-- Dark mode with orange accent -->
+<uc-file-uploader-regular class="uc-dark uc-orange"></uc-file-uploader-regular>
+```
+
+## Complete Example
+
+```html
+<!DOCTYPE html>
+<html>
+<head>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  
+  <style>
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: #f8fafc;
+      padding: 2rem;
+    }
+    
+    .uploader-container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    
+    .custom-theme {
+      /* Brand colors */
+      --uc-primary: #0ea5e9;
+      --uc-primary-hover: #0284c7;
+      --uc-primary-foreground: #ffffff;
+      
+      /* UI colors */
+      --uc-background: #ffffff;
+      --uc-foreground: #0f172a;
+      --uc-border: #e2e8f0;
+      --uc-muted: #f8fafc;
+      --uc-muted-foreground: #64748b;
+      
+      /* Typography */
+      --uc-font-family: 'Inter', system-ui, sans-serif;
+      --uc-font-size: 14px;
+      
+      /* Layout */
+      --uc-radius: 8px;
+      --uc-padding: 12px;
+      --uc-button-size: 38px;
+      --uc-grid-col: 3;
+      --uc-grid-gap: 12px;
+      
+      /* Effects */
+      --uc-dialog-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
+                          0 4px 6px -2px rgba(0, 0, 0, 0.05);
+      --uc-transition: 0.15s ease;
+    }
+    
+    /* Dark mode support */
+    @media (prefers-color-scheme: dark) {
+      body {
+        background: #0f172a;
+      }
+      
+      .custom-theme {
+        --uc-background: #1e293b;
+        --uc-foreground: #f1f5f9;
+        --uc-border: #334155;
+        --uc-muted: #0f172a;
+      }
+    }
+  </style>
+  
+  <script type="module">
+    import * as UC from 'https://cdn.jsdelivr.net/npm/@uploadcare/file-uploader@latest/web/file-uploader.min.js';
+    UC.defineComponents(UC);
+  </script>
+</head>
+<body>
+  <div class="uploader-container">
+    <h1>Custom Themed Uploader</h1>
+    
+    <uc-file-uploader-regular 
+      class="custom-theme"
+      ctx-name="uploader">
+    </uc-file-uploader-regular>
+    
+    <uc-config 
+      ctx-name="uploader"
+      pubkey="YOUR_PUBLIC_KEY"
+      multiple="true"
+      max-local-file-size-bytes="10485760"
+    ></uc-config>
+    
+    <uc-upload-ctx-provider ctx-name="uploader"></uc-upload-ctx-provider>
+  </div>
+</body>
+</html>
+```
+
+## CSS Variable Reference
+
+### Complete List
+
+<Tabs>
+  <Tab title="Colors">
+    | Variable | Description |
+    |----------|-------------|
+    | `--uc-primary` | Primary brand color |
+    | `--uc-primary-hover` | Primary hover state |
+    | `--uc-primary-transparent` | Transparent primary |
+    | `--uc-primary-foreground` | Text on primary |
+    | `--uc-background` | Main background |
+    | `--uc-foreground` | Main text color |
+    | `--uc-secondary` | Secondary button |
+    | `--uc-secondary-hover` | Secondary hover |
+    | `--uc-secondary-foreground` | Secondary text |
+    | `--uc-muted` | Muted background |
+    | `--uc-muted-foreground` | Muted text |
+    | `--uc-destructive` | Error background |
+    | `--uc-destructive-foreground` | Error text |
+    | `--uc-border` | Border color |
+  </Tab>
+  
+  <Tab title="Layout">
+    | Variable | Description |
+    |----------|-------------|
+    | `--uc-button-size` | Button height |
+    | `--uc-preview-size` | Thumbnail size |
+    | `--uc-padding` | Base padding |
+    | `--uc-radius` | Border radius |
+    | `--uc-dialog-width` | Modal width |
+    | `--uc-dialog-max-width` | Max modal width |
+    | `--uc-dialog-max-height` | Max modal height |
+    | `--uc-grid-col` | Grid columns |
+    | `--uc-grid-gap` | Grid gap |
+    | `--uc-grid-aspect-ratio` | Item ratio |
+  </Tab>
+  
+  <Tab title="Typography">
+    | Variable | Description |
+    |----------|-------------|
+    | `--uc-font-family` | Main font |
+    | `--uc-font-size` | Base size |
+    | `--uc-line-height` | Line height |
+  </Tab>
+  
+  <Tab title="Effects">
+    | Variable | Description |
+    |----------|-------------|
+    | `--uc-transition` | Transition |
+    | `--uc-dialog-shadow` | Modal shadow |
+  </Tab>
+</Tabs>
+
+## Best Practices
+
+<Note>
+- Use CSS variables for maximum flexibility
+- Test with both light and dark modes
+- Ensure sufficient color contrast for accessibility
+- Use system fonts for better performance
+- Leverage built-in responsive behavior
+- Combine theme classes for quick customization
+</Note>
+
+<Warning>
+When customizing colors, ensure your theme maintains WCAG 2.1 AA contrast ratios (4.5:1 for normal text, 3:1 for large text).
+</Warning>

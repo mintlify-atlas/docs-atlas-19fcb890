@@ -1,0 +1,494 @@
+---
+title: CameraSource
+description: Capture photos and record videos directly from the user's camera with full control over settings and modes
+---
+
+The `CameraSource` component provides a complete camera capture interface for taking photos and recording videos. It handles camera permissions, device selection, and provides controls for capture, preview, and retake functionality.
+
+## Overview
+
+CameraSource extends `LitUploaderBlock` and creates a full-screen camera interface with support for:
+- Photo capture
+- Video recording with audio
+- Multiple camera selection (front/back)
+- Microphone selection and control
+- Camera mirroring
+- Recording time limits
+- Preview and retake functionality
+
+## Basic Usage
+
+```html
+<uc-camera-source ctx-name="my-uploader"></uc-camera-source>
+```
+
+Typically accessed through the source list:
+
+```html
+<uc-config source-list="local, camera"></uc-config>
+<uc-source-list></uc-source-list>
+```
+
+## Camera Modes
+
+Configure available camera modes:
+
+<CodeGroup>
+```html Photo Only
+<uc-config camera-modes="photo"></uc-config>
+```
+
+```html Video Only
+<uc-config camera-modes="video"></uc-config>
+```
+
+```html Both (Default)
+<uc-config camera-modes="photo, video"></uc-config>
+```
+</CodeGroup>
+
+## Configuration
+
+### Camera Mirror
+
+Mirror the camera preview (useful for front-facing cameras):
+
+```html
+<uc-config camera-mirror="true"></uc-config>
+```
+
+```javascript
+const config = document.querySelector('uc-config');
+config.cameraMirror = true;
+```
+
+This horizontally flips the camera preview to match user expectations.
+
+### Audio Recording
+
+Control audio recording for videos:
+
+```html
+<!-- Enable audio (default) -->
+<uc-config enable-audio-recording="true"></uc-config>
+
+<!-- Disable audio -->
+<uc-config enable-audio-recording="false"></uc-config>
+```
+
+When enabled:
+- Microphone permission is requested
+- Audio device selector is shown
+- Mute toggle button is available
+
+### Video Recording Duration
+
+Set maximum recording duration in seconds:
+
+```html
+<!-- 60 second limit -->
+<uc-config max-video-recording-duration="60"></uc-config>
+
+<!-- No limit (default) -->
+<uc-config max-video-recording-duration="null"></uc-config>
+```
+
+```javascript
+config.maxVideoRecordingDuration = 120; // 2 minutes
+```
+
+A countdown timer is displayed when a limit is set.
+
+### Media Recorder Options
+
+Customize video recording parameters:
+
+```javascript
+const config = document.querySelector('uc-config');
+
+config.mediaRecorderOptions = {
+  mimeType: 'video/webm;codecs=vp9',
+  videoBitsPerSecond: 2500000,
+  audioBitsPerSecond: 128000
+};
+```
+
+The component automatically falls back to supported formats:
+1. Your specified `mimeType`
+2. `video/webm` (if supported)
+3. `video/mp4` (fallback)
+
+## User Interface
+
+### Photo Mode
+
+In photo mode, users can:
+1. See live camera preview
+2. Switch between cameras (if multiple available)
+3. Take a photo by clicking the camera button
+4. Preview the captured photo
+5. Retake or accept the photo
+
+### Video Mode
+
+In video mode, users can:
+1. See live camera preview
+2. Switch between cameras
+3. Select microphone (if audio enabled)
+4. Mute/unmute audio
+5. Start recording
+6. See recording timer
+7. Stop recording
+8. Play/pause preview
+9. Retake or accept the video
+
+## Permissions
+
+The component handles camera and microphone permissions:
+
+### Automatic Request (Desktop)
+
+On browsers with Permissions API support, permissions are requested automatically:
+
+```javascript
+// Component automatically requests:
+// - Camera permission
+// - Microphone permission (if audio enabled)
+```
+
+### Manual Request (Fallback)
+
+On unsupported browsers, a "Grant permissions" button is shown:
+
+```html
+<button class="uc-permissions-button">
+  Grant camera access
+</button>
+```
+
+### Permission States
+
+The interface adapts to permission states:
+
+- **Granted** - Shows camera interface
+- **Denied** - Shows error message
+- **Prompt** - Shows permission request message
+
+## Device Selection
+
+### Camera Selection
+
+When multiple cameras are available:
+
+```html
+<uc-select class="uc-camera-select">
+  <option>Front Camera</option>
+  <option>Back Camera</option>
+</uc-select>
+```
+
+Users can switch between cameras at any time.
+
+### Microphone Selection
+
+When audio recording is enabled and multiple microphones exist:
+
+```html
+<uc-select class="uc-audio-select">
+  <option>Built-in Microphone</option>
+  <option>External Microphone</option>
+</uc-select>
+```
+
+## Workflow
+
+### Photo Capture Flow
+
+1. Camera activates with live preview
+2. User clicks camera button
+3. Photo is captured and displayed
+4. User can:
+   - **Retake** - Returns to live preview
+   - **Accept** - Uploads the photo
+
+### Video Recording Flow
+
+1. Camera activates with live preview
+2. User clicks record button
+3. Recording starts, timer displays
+4. User clicks stop button (or time limit reached)
+5. Video preview plays
+6. User can:
+   - **Play/Pause** - Control preview playback
+   - **Retake** - Returns to live preview
+   - **Accept** - Uploads the video
+
+## Output Files
+
+### Photo Output
+
+```javascript
+// Photo file format:
+{
+  name: 'camera-1234567890.jpeg',
+  type: 'image/jpeg',
+  size: 245678,
+  // ... uploaded to Uploadcare
+}
+```
+
+Photos are always JPEG format.
+
+### Video Output
+
+```javascript
+// Video file format:
+{
+  name: 'video-1234567890.webm',
+  type: 'video/webm',
+  size: 1234567,
+  // ... uploaded to Uploadcare
+}
+```
+
+Video format depends on browser support:
+- `.webm` - Most modern browsers
+- `.mp4` - Safari, older browsers
+- `.mkv` - Some browsers with specific codecs
+- `.avi` - Fallback
+
+## Events
+
+Camera actions emit telemetry events:
+
+```javascript
+const uploader = document.querySelector('uc-upload-ctx-provider');
+
+uploader.addEventListener('file-added', (e) => {
+  if (e.detail.source === 'camera') {
+    console.log('Camera capture added:', e.detail);
+  }
+});
+```
+
+Internal telemetry tracks:
+- Camera activation
+- Tab switching (photo/video)
+- Shot/recording events
+- Retake actions
+- Accept actions
+
+## Examples
+
+### Photo Only Mode
+
+```html
+<uc-config 
+  ctx-name="my-uploader"
+  pubkey="YOUR_KEY"
+  source-list="camera"
+  camera-modes="photo"
+  camera-mirror
+></uc-config>
+```
+
+### Video with Time Limit
+
+```html
+<uc-config 
+  ctx-name="my-uploader"
+  pubkey="YOUR_KEY"
+  camera-modes="video"
+  max-video-recording-duration="30"
+  enable-audio-recording
+></uc-config>
+```
+
+### Silent Video Recording
+
+```html
+<uc-config 
+  ctx-name="my-uploader"
+  pubkey="YOUR_KEY"
+  camera-modes="video"
+  enable-audio-recording="false"
+></uc-config>
+```
+
+### Both Modes with Custom Settings
+
+```html
+<uc-config 
+  ctx-name="my-uploader"
+  pubkey="YOUR_KEY"
+  camera-modes="photo, video"
+  camera-mirror
+  max-video-recording-duration="60"
+  enable-audio-recording
+></uc-config>
+
+<script>
+  const config = document.querySelector('uc-config');
+  config.mediaRecorderOptions = {
+    videoBitsPerSecond: 3000000
+  };
+</script>
+```
+
+### Handle Camera Uploads
+
+```javascript
+const uploader = document.querySelector('uc-upload-ctx-provider');
+
+uploader.addEventListener('file-upload-success', (e) => {
+  // Check if file came from camera
+  const isCameraFile = 
+    e.detail.name.startsWith('camera-') || 
+    e.detail.name.startsWith('video-');
+  
+  if (isCameraFile) {
+    console.log('Camera file uploaded:', e.detail.cdnUrl);
+    
+    // Apply transformations for photos
+    if (e.detail.name.startsWith('camera-')) {
+      const optimizedUrl = `${e.detail.cdnUrl}-/quality/smart/-/format/auto/`;
+      console.log('Optimized photo:', optimizedUrl);
+    }
+  }
+});
+```
+
+## Browser Compatibility
+
+### Required APIs
+
+- `MediaDevices.getUserMedia()` - Camera access
+- `MediaRecorder` - Video recording
+- `HTMLMediaElement` - Video preview
+- `Canvas 2D Context` - Photo capture
+
+### Mobile Considerations
+
+On mobile devices:
+- Use native camera controls when available
+- Request specific camera (front/back) via constraints
+- Handle orientation changes
+- Manage memory for large videos
+
+### Desktop Considerations
+
+- Multiple camera support
+- Higher resolution options
+- External webcam support
+- Screen capture (not implemented in CameraSource)
+
+## Styling
+
+Customize the camera interface:
+
+```css
+/* Camera container */
+uc-camera-source {
+  --camera-background: #000;
+}
+
+/* Video element */
+uc-camera-source video {
+  object-fit: cover;
+}
+
+/* Controls area */
+uc-camera-source .uc-controls {
+  background: rgba(0, 0, 0, 0.8);
+  padding: 20px;
+}
+
+/* Recording indicator */
+uc-camera-source.uc-recording .uc-shot-btn {
+  animation: pulse 1s infinite;
+}
+```
+
+## Accessibility
+
+### Keyboard Controls
+
+- Tab navigation through controls
+- Enter/Space to activate buttons
+- Focus management during state changes
+
+### Screen Reader Support
+
+```html
+<!-- Buttons have descriptive labels -->
+<button aria-label="Take photo" title="Take photo">
+  <uc-icon name="camera-full"></uc-icon>
+</button>
+
+<button aria-label="Start recording" title="Start recording">
+  <uc-icon name="video-camera-full"></uc-icon>
+</button>
+```
+
+### Status Announcements
+
+Important state changes should be announced to screen readers:
+
+```javascript
+// Add live region for status updates
+const status = document.createElement('div');
+status.setAttribute('role', 'status');
+status.setAttribute('aria-live', 'polite');
+status.textContent = 'Recording started';
+```
+
+## Error Handling
+
+The component handles various error scenarios:
+
+### Permission Denied
+
+```javascript
+// Shows user-friendly error message
+// "Camera access denied. Please grant permission in your browser settings."
+```
+
+### No Camera Available
+
+```javascript
+// Detected automatically
+// Shows appropriate error message
+```
+
+### Recording Failed
+
+```javascript
+// Logged to console and telemetry
+// User can retry
+```
+
+## Mobile HTML Capture
+
+On mobile devices with HTML media capture, the source list may show separate buttons:
+
+```html
+<!-- Mobile devices may show: -->
+<uc-source-btn type="mobile-photo-camera"></uc-source-btn>
+<uc-source-btn type="mobile-video-camera"></uc-source-btn>
+```
+
+These trigger native camera apps instead of the web-based camera interface.
+
+## Source Code Reference
+
+Implementation: `/workspace/source/src/blocks/CameraSource/CameraSource.ts:53`
+
+Camera mode calculations: `/workspace/source/src/blocks/CameraSource/calcCameraModes.ts`
+
+Constants: `/workspace/source/src/blocks/CameraSource/constants.ts:14`
+
+## See Also
+
+- [Config](/components/config) - Camera configuration options
+- [SourceList](/components/source-list) - Source selection
+- [UploadList](/components/upload-list) - Manage captured files

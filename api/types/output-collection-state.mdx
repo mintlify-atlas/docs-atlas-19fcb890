@@ -1,0 +1,273 @@
+---
+title: "OutputCollectionState"
+description: "Collection state type for tracking multiple file uploads"
+---
+
+The `OutputCollectionState` type represents the aggregate state of all files in the upload collection. It provides counters, progress tracking, and access to files grouped by status.
+
+## Overview
+
+The collection state tracks all files in the uploader, providing real-time information about upload progress, success counts, and any failures. It's the primary way to monitor batch uploads.
+
+## Type Definition
+
+```typescript
+export type OutputCollectionState<
+  TStatus extends OutputCollectionStatus = OutputCollectionStatus,
+  TGroupFlag extends GroupFlag = 'maybe-has-group',
+> = {
+  // Status
+  status: TStatus;
+  
+  // Counters
+  totalCount: number;
+  successCount: number;
+  failedCount: number;
+  uploadingCount: number;
+  
+  // Progress
+  progress: number; // 0-100
+  
+  // File arrays
+  successEntries: OutputFileEntry<'success'>[];
+  failedEntries: OutputFileEntry<'failed'>[];
+  uploadingEntries: OutputFileEntry<'uploading'>[];
+  idleEntries: OutputFileEntry<'idle'>[];
+  allEntries: OutputFileEntry[];
+  
+  // File group (if groupOutput is enabled)
+  group: UploadcareGroup | null;
+} & StatusSpecificFields;
+```
+
+## Status Values
+
+```typescript
+type OutputCollectionStatus = 'idle' | 'uploading' | 'success' | 'failed';
+```
+
+### Idle State
+No uploads in progress:
+
+```typescript
+{
+  status: 'idle';
+  isUploading: false;
+  isSuccess: false;
+  isFailed: false;
+  progress: 0;
+  totalCount: 0;
+  errors: [];
+}
+```
+
+### Uploading State
+Files are being uploaded:
+
+```typescript
+{
+  status: 'uploading';
+  isUploading: true;
+  isSuccess: false;
+  isFailed: false;
+  progress: 45; // 0-100
+  uploadingCount: 3;
+  successCount: 2;
+  errors: [];
+}
+```
+
+### Success State
+All files uploaded successfully:
+
+```typescript
+{
+  status: 'success';
+  isUploading: false;
+  isSuccess: true;
+  isFailed: false;
+  progress: 100;
+  totalCount: 5;
+  successCount: 5;
+  failedCount: 0;
+  errors: [];
+}
+```
+
+### Failed State
+Some or all files failed:
+
+```typescript
+{
+  status: 'failed';
+  isUploading: false;
+  isSuccess: false;
+  isFailed: true;
+  failedCount: 2;
+  errors: OutputError<OutputCollectionErrorType>[];
+}
+```
+
+## Properties
+
+<ParamField path="status" type="OutputCollectionStatus" required>
+  Overall collection status (idle, uploading, success, failed)
+</ParamField>
+
+<ParamField path="totalCount" type="number" required>
+  Total number of files in the collection
+</ParamField>
+
+<ParamField path="successCount" type="number" required>
+  Number of successfully uploaded files
+</ParamField>
+
+<ParamField path="failedCount" type="number" required>
+  Number of failed uploads
+</ParamField>
+
+<ParamField path="uploadingCount" type="number" required>
+  Number of files currently uploading
+</ParamField>
+
+<ParamField path="progress" type="number" required>
+  Overall upload progress from 0 to 100
+</ParamField>
+
+<ParamField path="successEntries" type="OutputFileEntry[]" required>
+  Array of successfully uploaded files
+</ParamField>
+
+<ParamField path="failedEntries" type="OutputFileEntry[]" required>
+  Array of failed file uploads
+</ParamField>
+
+<ParamField path="uploadingEntries" type="OutputFileEntry[]" required>
+  Array of files currently uploading
+</ParamField>
+
+<ParamField path="idleEntries" type="OutputFileEntry[]" required>
+  Array of files not yet uploaded
+</ParamField>
+
+<ParamField path="allEntries" type="OutputFileEntry[]" required>
+  All files in the collection
+</ParamField>
+
+<ParamField path="group" type="UploadcareGroup | null">
+  File group object (when groupOutput is enabled)
+</ParamField>
+
+<ParamField path="isUploading" type="boolean" required>
+  Whether any files are currently uploading
+</ParamField>
+
+<ParamField path="isSuccess" type="boolean" required>
+  Whether all files uploaded successfully
+</ParamField>
+
+<ParamField path="isFailed" type="boolean" required>
+  Whether any files failed to upload
+</ParamField>
+
+<ParamField path="errors" type="OutputError[]" required>
+  Collection-level errors (e.g., too many files)
+</ParamField>
+
+## Usage Example
+
+```typescript
+import type { OutputCollectionState } from '@uploadcare/file-uploader';
+
+// Get collection state
+const uploaderCtx = document.querySelector('uc-upload-ctx-provider');
+const api = uploaderCtx.getAPI();
+
+const state: OutputCollectionState = api.getOutputCollectionState();
+
+console.log('Total files:', state.totalCount);
+console.log('Progress:', state.progress + '%');
+console.log('Successful:', state.successCount);
+console.log('Failed:', state.failedCount);
+
+if (state.isSuccess) {
+  console.log('All files uploaded!');
+  state.successEntries.forEach(entry => {
+    console.log('File URL:', entry.cdnUrl);
+  });
+}
+```
+
+## Monitoring Progress
+
+```typescript
+uploaderCtx.addEventListener('upload-progress', (e) => {
+  const state: OutputCollectionState = e.detail;
+  
+  // Update progress bar
+  const progressBar = document.querySelector('#progress');
+  progressBar.value = state.progress;
+  
+  // Update counters
+  document.querySelector('#uploaded').textContent = 
+    `${state.successCount} / ${state.totalCount}`;
+  
+  // Show status
+  if (state.isUploading) {
+    console.log(`Uploading ${state.uploadingCount} files...`);
+  }
+});
+```
+
+## File Groups
+
+When `groupOutput` is enabled, successfully uploaded files are grouped:
+
+```typescript
+uploaderCtx.addEventListener('upload-success', (e) => {
+  const state: OutputCollectionState = e.detail;
+  
+  if (state.group) {
+    console.log('Group ID:', state.group.id);
+    console.log('Group URL:', state.group.cdnUrl);
+    console.log('Files in group:', state.group.files);
+    
+    // Access individual files via the group
+    state.group.files.forEach((file, index) => {
+      console.log(`File ${index}:`, file.cdnUrl);
+    });
+  }
+});
+```
+
+## Error Handling
+
+```typescript
+uploaderCtx.addEventListener('upload-failed', (e) => {
+  const state: OutputCollectionState = e.detail;
+  
+  console.error('Upload failed!');
+  console.error('Failed files:', state.failedCount);
+  
+  // Collection-level errors
+  state.errors.forEach(error => {
+    if (error.type === 'TOO_MANY_FILES') {
+      console.error(`Too many files: ${error.payload.total} (max: ${error.payload.max})`);
+    }
+  });
+  
+  // Individual file errors
+  state.failedEntries.forEach(entry => {
+    console.error(`Failed: ${entry.name}`);
+    entry.errors.forEach(error => {
+      console.error(`  - ${error.type}: ${error.message}`);
+    });
+  });
+});
+```
+
+## See Also
+
+- [OutputFileEntry](/api/types/output-file-entry) - Individual file entries
+- [Events](/api/types/events) - Event types and payloads
+- [UploaderPublicApi](/api/uploader-public-api) - API methods for accessing state

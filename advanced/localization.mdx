@@ -1,0 +1,462 @@
+---
+title: Localization and i18n
+description: Internationalize your file uploader with built-in translations and custom overrides
+---
+
+The File Uploader includes built-in support for 35+ languages with a flexible localization system that allows you to customize any text or add your own translations.
+
+## Quick Start
+
+Set the locale using the `localeName` configuration:
+
+```html
+<uc-config 
+  pubkey="YOUR_PUBLIC_KEY"
+  locale-name="es">
+</uc-config>
+```
+
+## Supported Locales
+
+The library includes translations for the following languages:
+
+<Tabs>
+  <Tab title="European">
+    - `en` - English (default)
+    - `es` - Spanish
+    - `de` - German
+    - `fr` - French
+    - `it` - Italian
+    - `pt` - Portuguese
+    - `pl` - Polish
+    - `nl` - Dutch
+    - `ru` - Russian
+    - `uk` - Ukrainian
+    - `tr` - Turkish
+    - `el` - Greek
+    - `cs` - Czech
+    - `da` - Danish
+    - `et` - Estonian
+    - `fi` - Finnish
+    - `is` - Icelandic
+    - `lv` - Latvian
+    - `nb` - Norwegian Bokmål
+    - `ro` - Romanian
+    - `sk` - Slovak
+    - `sr` - Serbian
+    - `sv` - Swedish
+  </Tab>
+  
+  <Tab title="Asian">
+    - `zh` - Chinese (Simplified)
+    - `zh-TW` - Chinese (Traditional)
+    - `ja` - Japanese
+    - `ko` - Korean
+    - `vi` - Vietnamese
+  </Tab>
+  
+  <Tab title="Middle Eastern">
+    - `ar` - Arabic
+    - `he` - Hebrew
+  </Tab>
+  
+  <Tab title="Other">
+    - `az` - Azerbaijani
+    - `ca` - Catalan
+    - `hy` - Armenian
+    - `ka` - Georgian
+    - `kk` - Kazakh
+  </Tab>
+</Tabs>
+
+## Locale Structure
+
+Each locale is defined as an object with key-value pairs:
+
+```typescript
+// Source: src/locales/file-uploader/en.ts
+export default {
+  'locale-id': 'en',
+  'social-source-lang': 'en',
+  'upload-file': 'Upload file',
+  'upload-files': 'Upload files',
+  'choose-file': 'Choose file',
+  'choose-files': 'Choose files',
+  'drop-files-here': 'Drop files here',
+  'select-file-source': 'Select file source',
+  selected: 'Selected',
+  upload: 'Upload',
+  'add-more': 'Add more',
+  cancel: 'Cancel',
+  // ... 100+ more keys
+};
+```
+
+### Key Categories
+
+<Tabs>
+  <Tab title="Actions">
+    - `upload` - Upload button text
+    - `cancel` - Cancel action
+    - `done` - Done/finish button
+    - `back` - Back navigation
+    - `apply` - Apply changes
+    - `remove-from-list` - Remove file action
+  </Tab>
+  
+  <Tab title="Labels">
+    - `upload-file` / `upload-files` - Upload button labels
+    - `choose-file` / `choose-files` - File chooser labels
+    - `drop-files-here` - Drop zone text
+    - `select-file-source` - Source selection
+  </Tab>
+  
+  <Tab title="Status">
+    - `uploading` - File is uploading
+    - `finished` - Upload complete
+    - `failed` - Upload failed
+    - `idle` - Waiting state
+    - `validation` - Validating file
+  </Tab>
+  
+  <Tab title="Errors">
+    - `upload-error` - Generic upload error
+    - `validation-error` - Validation error
+    - `images-only-accepted` - Image-only restriction
+    - `file-type-not-allowed` - File type error
+    - `files-max-size-limit-error` - File size error
+  </Tab>
+  
+  <Tab title="Sources">
+    - `src-type-local` - Local device
+    - `src-type-camera` - Camera
+    - `src-type-from-url` - From URL
+    - `src-type-dropbox` - Dropbox
+    - `src-type-gdrive` - Google Drive
+    - `src-type-facebook` - Facebook
+    - ... and more
+  </Tab>
+</Tabs>
+
+## Locale Manager
+
+The locale system is managed by the `LocaleManager` class:
+
+```typescript
+// Source: src/abstract/managers/LocaleManager.ts
+export class LocaleManager extends SharedInstance {
+  private _localeName = '';
+
+  public constructor(sharedInstancesBag: SharedInstancesBag) {
+    super(sharedInstancesBag);
+
+    // Initialize with English locale
+    for (const [key, value] of Object.entries(en)) {
+      this._ctx.add(localeStateKey(key), value, noTranslation);
+    }
+
+    // Watch for locale changes
+    this.addSub(
+      this._ctx.sub(sharedConfigKey('localeName'), async (localeName) => {
+        if (!localeName) return;
+        
+        this._localeName = localeName;
+        const definition = await resolveLocaleDefinition(localeName);
+        
+        // Apply locale and overrides
+        const overrides = this._cfg.localeDefinitionOverride?.[localeName];
+        for (const [key, value] of Object.entries(definition)) {
+          const overriddenValue = overrides?.[key];
+          this._ctx.add(localeStateKey(key), overriddenValue ?? value, true);
+        }
+      }),
+    );
+  }
+}
+```
+
+## Custom Translations
+
+### Override Existing Translations
+
+You can override specific translations for any locale:
+
+```html
+<uc-config id="config" pubkey="YOUR_PUBLIC_KEY" locale-name="en"></uc-config>
+
+<script type="module">
+  const config = document.getElementById('config');
+  
+  config.localeDefinitionOverride = {
+    en: {
+      'upload-file': 'Upload Your File',
+      'upload-files': 'Upload Your Files',
+      'drop-files-here': 'Drop your files here to begin',
+      'upload': 'Start Upload',
+    },
+  };
+</script>
+```
+
+### Override Multiple Locales
+
+```javascript
+config.localeDefinitionOverride = {
+  en: {
+    'upload-file': 'Upload Your File',
+    'choose-file': 'Select a File',
+  },
+  es: {
+    'upload-file': 'Sube tu Archivo',
+    'choose-file': 'Selecciona un Archivo',
+  },
+  de: {
+    'upload-file': 'Lade deine Datei hoch',
+    'choose-file': 'Wähle eine Datei',
+  },
+};
+```
+
+## Adding Custom Locales
+
+Register entirely new locales using the `defineLocale` function:
+
+```typescript
+import { defineLocale } from '@uploadcare/file-uploader';
+
+// Define a new locale
+defineLocale('custom', {
+  'locale-id': 'custom',
+  'social-source-lang': 'en',
+  'upload-file': 'Upload File',
+  'upload-files': 'Upload Files',
+  'choose-file': 'Choose File',
+  'choose-files': 'Choose Files',
+  'drop-files-here': 'Drop files here',
+  // ... define all required keys
+  // Falls back to English for missing keys
+});
+```
+
+### Async Locale Loading
+
+For large locales or dynamic loading, use async locale definitions:
+
+```typescript
+import { defineLocale } from '@uploadcare/file-uploader';
+
+// Register async locale loader
+defineLocale('pt-BR', async () => {
+  const response = await fetch('/locales/pt-BR.json');
+  return await response.json();
+});
+```
+
+```html
+<uc-config locale-name="pt-BR"></uc-config>
+```
+
+The locale will be loaded automatically when needed.
+
+## Locale Registry
+
+The locale system uses a registry to manage locale definitions:
+
+```typescript
+// Source: src/abstract/localeRegistry.ts
+const localeRegistry: Map<string, LocaleDefinition> = new Map();
+const localeResolvers: Map<string, LocaleDefinitionResolver> = new Map();
+
+const defineLocaleSync = (localeName: string, definition: LocaleDefinition) => {
+  // Merge with English defaults
+  const locale: LocaleDefinition = { 
+    ...(en as unknown as LocaleDefinition), 
+    ...definition 
+  };
+  localeRegistry.set(localeName, locale);
+  return locale;
+};
+
+export const resolveLocaleDefinition = async (localeName: string) => {
+  let localeDefinition = localeRegistry.get(localeName);
+
+  if (!localeDefinition) {
+    const definitionResolver = localeResolvers.get(localeName);
+    if (!definitionResolver) {
+      throw new Error(`Locale ${localeName} is not defined`);
+    }
+    const definition = await definitionResolver();
+    localeDefinition = defineLocaleSync(localeName, definition);
+  }
+
+  return localeDefinition;
+};
+```
+
+## Pluralization
+
+The library supports pluralization for languages with multiple plural forms:
+
+```typescript
+// English locale plurals
+export default {
+  file__one: 'file',
+  file__other: 'files',
+  error__one: 'error',
+  error__other: 'errors',
+  
+  // Usage in templates
+  'header-uploading': 'Uploading {{count}} {{plural:file(count)}}',
+  'header-failed': '{{count}} {{plural:error(count)}}',
+};
+```
+
+```typescript
+// Spanish locale with multiple plural forms
+export default {
+  file__one: 'archivo',
+  file__many: 'archivos',
+  file__other: 'archivos',
+  
+  'header-uploading': 'Subiendo {{count}} {{plural:file(count)}}',
+};
+```
+
+## Using Translations in Validators
+
+Access localized strings in custom validators:
+
+```typescript
+import type { FuncFileValidator } from '@uploadcare/file-uploader';
+
+const customValidator: FuncFileValidator = (outputEntry, api) => {
+  const maxSize = 10 * 1024 * 1024; // 10MB
+  
+  if (outputEntry.size > maxSize) {
+    return {
+      // Use built-in localized message
+      message: api.l10n('files-max-size-limit-error', { 
+        maxFileSize: `${maxSize / 1024 / 1024}MB` 
+      }),
+    };
+  }
+};
+```
+
+## Dynamic Locale Switching
+
+Change the locale at runtime:
+
+```html
+<select id="locale-selector">
+  <option value="en">English</option>
+  <option value="es">Español</option>
+  <option value="de">Deutsch</option>
+  <option value="fr">Français</option>
+  <option value="ja">日本語</option>
+</select>
+
+<uc-config id="config" pubkey="YOUR_PUBLIC_KEY" locale-name="en"></uc-config>
+
+<script>
+  const selector = document.getElementById('locale-selector');
+  const config = document.getElementById('config');
+  
+  selector.addEventListener('change', (e) => {
+    config.localeName = e.target.value;
+  });
+</script>
+```
+
+## Complete Example
+
+```html
+<!DOCTYPE html>
+<html>
+<head>
+  <script type="module">
+    import * as UC from 'https://cdn.jsdelivr.net/npm/@uploadcare/file-uploader@latest/web/file-uploader.min.js';
+    UC.defineComponents(UC);
+    
+    // Define custom locale
+    UC.defineLocale('custom-en', {
+      'upload-file': 'Upload Your Document',
+      'upload-files': 'Upload Your Documents',
+      'drop-files-here': 'Drop documents here or click to browse',
+      'file-type-not-allowed': 'This document type is not supported',
+      'files-max-size-limit-error': 'Document exceeds {{maxFileSize}} limit',
+    });
+    
+    // Configure with custom locale
+    window.addEventListener('DOMContentLoaded', () => {
+      const config = document.getElementById('config');
+      
+      // Apply locale overrides
+      config.localeDefinitionOverride = {
+        'custom-en': {
+          'upload': 'Begin Upload',
+          'done': 'Complete',
+        },
+      };
+    });
+  </script>
+</head>
+<body>
+  <uc-file-uploader-regular ctx-name="uploader"></uc-file-uploader-regular>
+  <uc-config 
+    id="config"
+    ctx-name="uploader"
+    pubkey="YOUR_PUBLIC_KEY"
+    locale-name="custom-en"
+  ></uc-config>
+  <uc-upload-ctx-provider ctx-name="uploader"></uc-upload-ctx-provider>
+</body>
+</html>
+```
+
+## API Reference
+
+### Configuration Properties
+
+| Property | Type | Default | Description |
+|----------|------|---------|-------------|
+| `localeName` | `string` | `'en'` | Locale identifier |
+| `localeDefinitionOverride` | `LocaleDefinitionOverride` | `null` | Custom translation overrides |
+
+### Types
+
+```typescript
+// Source: src/types/exported.ts
+export type LocaleDefinition = typeof en;
+
+export type LocaleDefinitionOverride = Record<string, Partial<LocaleDefinition>>;
+
+export type LocaleDefinitionResolver = () => Promise<LocaleDefinition>;
+```
+
+### Functions
+
+```typescript
+// Define a locale synchronously
+defineLocale(localeName: string, definition: LocaleDefinition): void;
+
+// Define a locale asynchronously
+defineLocale(localeName: string, resolver: () => Promise<LocaleDefinition>): void;
+
+// Resolve a locale definition
+resolveLocaleDefinition(localeName: string): Promise<LocaleDefinition>;
+```
+
+## Best Practices
+
+<Note>
+- Always provide fallback text in case a translation is missing
+- Test your application with different locales to ensure proper layout
+- Consider RTL (right-to-left) languages when customizing styles
+- Use `localeDefinitionOverride` for brand-specific terminology
+- Load locales asynchronously for better performance
+</Note>
+
+<Warning>
+When defining custom locales, ensure all required keys are present or they will fall back to English defaults.
+</Warning>

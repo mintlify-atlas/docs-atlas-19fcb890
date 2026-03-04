@@ -1,0 +1,302 @@
+---
+title: defineLocale
+description: Define custom locales or override existing translations for File Uploader to support internationalization.
+---
+
+`defineLocale` allows you to add custom language translations or override existing locale definitions for File Uploader. It supports both synchronous and asynchronous (lazy-loaded) locale definitions.
+
+## Signature
+
+```ts
+function defineLocale(
+  localeName: string,
+  definitionOrResolver: LocaleDefinition | LocaleDefinitionResolver
+): void
+```
+
+<ParamField path="localeName" type="string" required>
+  The locale identifier (e.g., 'en', 'fr', 'es', 'de')
+</ParamField>
+
+<ParamField path="definitionOrResolver" type="LocaleDefinition | LocaleDefinitionResolver" required>
+  Either a locale definition object or a function that returns a Promise resolving to a locale definition
+</ParamField>
+
+## Types
+
+```ts
+type LocaleDefinition = {
+  'locale-id': string;
+  'upload-file': string;
+  'choose-file': string;
+  'drop-files-here': string;
+  // ... and many more translation keys
+};
+
+type LocaleDefinitionResolver = () => Promise<LocaleDefinition>;
+```
+
+## Usage
+
+### Synchronous Definition
+
+Define a locale with an immediate object:
+
+```js
+import * as UC from '@uploadcare/file-uploader';
+
+UC.defineLocale('es', {
+  'locale-id': 'es',
+  'upload-file': 'Subir archivo',
+  'upload-files': 'Subir archivos',
+  'choose-file': 'Elegir archivo',
+  'choose-files': 'Elegir archivos',
+  'drop-files-here': 'Suelta los archivos aquí',
+  'select-file-source': 'Selecciona la fuente del archivo',
+  upload: 'Subir',
+  cancel: 'Cancelar',
+  // ... more translations
+});
+```
+
+### Asynchronous Definition (Lazy Loading)
+
+Define a locale with a function that loads translations on demand:
+
+```js
+import * as UC from '@uploadcare/file-uploader';
+
+// Define locale with lazy loading
+UC.defineLocale('fr', async () => {
+  const translations = await import('./locales/fr.js');
+  return translations.default;
+});
+```
+
+This approach is useful for:
+- **Code splitting** - Load translations only when needed
+- **Reducing bundle size** - Don't include all locales upfront
+- **Dynamic loading** - Fetch translations from a CDN or API
+
+### Using Built-in Locales
+
+File Uploader includes 34 built-in locales. Import and define them as needed:
+
+<CodeGroup>
+```js Individual Locale
+import * as UC from '@uploadcare/file-uploader';
+import fr from '@uploadcare/file-uploader/locales/fr';
+
+UC.defineLocale('fr', fr);
+```
+
+```js Lazy Load Built-in
+import * as UC from '@uploadcare/file-uploader';
+
+UC.defineLocale('de', async () => {
+  const locale = await import('@uploadcare/file-uploader/locales/de');
+  return locale.default;
+});
+```
+</CodeGroup>
+
+### Available Built-in Locales
+
+<Note>
+File Uploader includes the following locale files in the `src/locales/file-uploader/` directory:
+
+`ar`, `az`, `ca`, `cs`, `da`, `de`, `el`, `en`, `es`, `et`, `fi`, `fr`, `he`, `hy`, `is`, `it`, `ja`, `ka`, `kk`, `ko`, `lv`, `nb`, `nl`, `pl`, `pt`, `ro`, `ru`, `sk`, `sr`, `sv`, `tr`, `uk`, `vi`, `zh`, `zh-TW`
+</Note>
+
+## Activating a Locale
+
+After defining a locale, activate it using the `locale-name` configuration option:
+
+```html
+<uc-config
+  ctx-name="my-uploader"
+  pubkey="YOUR_PUBLIC_KEY"
+  locale-name="es"
+></uc-config>
+```
+
+Or programmatically:
+
+```js
+const ctx = UC.PubSub.getCtx('my-uploader');
+ctx.cfg.localeName = 'es';
+```
+
+## Partial Overrides
+
+You don't need to provide all translation keys. The locale definition is merged with the English locale as a fallback:
+
+```js
+import * as UC from '@uploadcare/file-uploader';
+
+// Only override specific keys
+UC.defineLocale('en-custom', {
+  'locale-id': 'en-custom',
+  'upload-file': 'Upload Your File',
+  'upload-files': 'Upload Your Files',
+  // All other keys will use English defaults
+});
+```
+
+## Implementation Details
+
+From the source code:
+
+```ts
+import { default as en } from '../locales/file-uploader/en';
+
+const localeRegistry: Map<string, LocaleDefinition> = new Map();
+const localeResolvers: Map<string, LocaleDefinitionResolver> = new Map();
+
+const defineLocaleSync = (localeName: string, definition: LocaleDefinition): LocaleDefinition => {
+  if (localeRegistry.has(localeName)) {
+    console.log(`Locale ${localeName} is already defined. Overwriting...`);
+  }
+
+  // Merge with English locale as fallback
+  const locale: LocaleDefinition = { ...en, ...definition };
+  localeRegistry.set(localeName, locale);
+
+  return locale;
+};
+
+const defineLocaleAsync = (localeName: string, definitionResolver: LocaleDefinitionResolver): void => {
+  localeResolvers.set(localeName, definitionResolver);
+};
+
+export const defineLocale = (
+  localeName: string,
+  definitionOrResolver: LocaleDefinition | LocaleDefinitionResolver,
+): void => {
+  if (typeof definitionOrResolver === 'function') {
+    defineLocaleAsync(localeName, definitionOrResolver);
+  } else {
+    defineLocaleSync(localeName, definitionOrResolver);
+  }
+};
+```
+
+## Complete Example
+
+Here's a complete example showing locale definition and usage:
+
+```html
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@uploadcare/file-uploader@1/web/uc-file-uploader-regular.min.css" />
+</head>
+<body>
+  <uc-config
+    ctx-name="my-uploader"
+    pubkey="YOUR_PUBLIC_KEY"
+    locale-name="es"
+  ></uc-config>
+  
+  <uc-file-uploader-regular ctx-name="my-uploader"></uc-file-uploader-regular>
+
+  <script type="module">
+    import * as UC from 'https://cdn.jsdelivr.net/npm/@uploadcare/file-uploader@1/web/file-uploader.min.js';
+
+    UC.defineComponents(UC);
+
+    // Define Spanish locale
+    UC.defineLocale('es', {
+      'locale-id': 'es',
+      'upload-file': 'Subir archivo',
+      'upload-files': 'Subir archivos',
+      'choose-file': 'Elegir archivo',
+      'choose-files': 'Elegir archivos',
+      'drop-files-here': 'Suelta los archivos aquí',
+      'select-file-source': 'Selecciona la fuente del archivo',
+      'upload': 'Subir',
+      'cancel': 'Cancelar',
+      'clear': 'Limpiar',
+      'done': 'Hecho',
+      'remove-from-list': 'Eliminar',
+      // Add more translations as needed
+    });
+  </script>
+</body>
+</html>
+```
+
+## Dynamic Locale Switching
+
+You can switch locales at runtime:
+
+```js
+import * as UC from '@uploadcare/file-uploader';
+
+// Define multiple locales
+UC.defineLocale('en', enLocale);
+UC.defineLocale('es', esLocale);
+UC.defineLocale('fr', frLocale);
+
+// Switch locale dynamically
+const ctx = UC.PubSub.getCtx('my-uploader');
+
+// Change to Spanish
+ctx.cfg.localeName = 'es';
+
+// Change to French
+ctx.cfg.localeName = 'fr';
+```
+
+## Locale Override via Configuration
+
+For quick overrides without defining a new locale, use `locale-definition-override`:
+
+```js
+const ctx = UC.PubSub.getCtx('my-uploader');
+
+ctx.cfg.localeDefinitionOverride = {
+  en: {
+    'upload-file': 'Custom Upload Text',
+    'choose-file': 'Pick a File'
+  }
+};
+```
+
+## Common Translation Keys
+
+Here are some of the most commonly used translation keys:
+
+| Key | Purpose | Example (English) |
+|-----|---------|------------------|
+| `upload-file` | Single file upload button | "Upload file" |
+| `upload-files` | Multiple files upload button | "Upload files" |
+| `choose-file` | Single file chooser | "Choose file" |
+| `choose-files` | Multiple files chooser | "Choose files" |
+| `drop-files-here` | Drop zone text | "Drop files here" |
+| `upload` | Upload action | "Upload" |
+| `cancel` | Cancel action | "Cancel" |
+| `done` | Completion action | "Done" |
+| `remove-from-list` | Remove file action | "Remove" |
+| `src-type-local` | Local file source | "From device" |
+| `src-type-camera` | Camera source | "Camera" |
+| `src-type-from-url` | URL source | "From link" |
+
+<Note>
+For a complete list of translation keys, refer to the [English locale file](https://github.com/uploadcare/file-uploader/blob/main/src/locales/file-uploader/en.ts) in the source code.
+</Note>
+
+## Best Practices
+
+1. **Use lazy loading** for locales to reduce initial bundle size
+2. **Include `locale-id`** in your locale definition
+3. **Test all user flows** after adding translations
+4. **Maintain consistency** in terminology across your locale
+5. **Consider pluralization** - some keys include plural forms (e.g., `file__one`, `file__other`)
+6. **Watch for updates** - New File Uploader versions may add new translation keys
+
+## See Also
+
+- [Configuration](/concepts/configuration) - Learn about locale configuration options
+- [defineComponents](/api/define-components) - Component registration
+- [Built-in Locales](https://github.com/uploadcare/file-uploader/tree/main/src/locales/file-uploader) - Source code for all built-in locales
