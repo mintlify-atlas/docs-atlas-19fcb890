@@ -1,0 +1,133 @@
+{
+  "projectType": "sdk-library",
+  "projectName": "Uploadcare File Uploader",
+  "projectDescription": "Stack-agnostic library for uploading, processing, and editing images on-the-fly",
+  "theme": "palm",
+  "primaryColor": "#040404",
+  "lightColor": "#fbd338",
+  "darkColor": "#fbe483",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "installation",
+              "quickstart"
+            ]
+          },
+          {
+            "group": "Core Concepts",
+            "pages": [
+              "concepts/configuration",
+              "concepts/components",
+              "concepts/solutions"
+            ]
+          },
+          {
+            "group": "Solutions",
+            "pages": [
+              "solutions/file-uploader-regular",
+              "solutions/file-uploader-inline",
+              "solutions/file-uploader-minimal",
+              "solutions/cloud-image-editor"
+            ]
+          },
+          {
+            "group": "Components",
+            "pages": [
+              "components/config",
+              "components/upload-ctx-provider",
+              "components/drop-area",
+              "components/source-list",
+              "components/upload-list",
+              "components/camera-source",
+              "components/url-source"
+            ]
+          },
+          {
+            "group": "Advanced",
+            "pages": [
+              "advanced/validation",
+              "advanced/localization",
+              "advanced/styling",
+              "advanced/events",
+              "advanced/secure-uploads"
+            ]
+          },
+          {
+            "group": "Framework Integration",
+            "pages": [
+              "integrations/react",
+              "integrations/nextjs",
+              "integrations/vue",
+              "integrations/angular",
+              "integrations/svelte",
+              "integrations/javascript"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "Configuration",
+            "pages": [
+              "api/configuration-options"
+            ]
+          },
+          {
+            "group": "Types",
+            "pages": [
+              "api/types/config-type",
+              "api/types/output-file-entry",
+              "api/types/output-collection-state",
+              "api/types/events"
+            ]
+          },
+          {
+            "group": "API",
+            "pages": [
+              "api/uploader-public-api",
+              "api/define-components",
+              "api/define-locale"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Multiple upload sources (local, URL, camera, Dropbox, Google Drive)",
+    "Large file handling with chunking and resumable uploads",
+    "Built-in image editor with cropping, filters, and transformations",
+    "Customizable appearance with CSS and pre-built themes",
+    "Framework-agnostic Web Components",
+    "TypeScript support with full type definitions",
+    "Localization support for 30+ languages",
+    "File validation and secure uploads",
+    "Responsive and accessible UI"
+  ],
+  "publicApiSurface": [
+    "defineComponents",
+    "FileUploaderRegular",
+    "FileUploaderInline",
+    "FileUploaderMinimal",
+    "CloudImageEditor",
+    "Config",
+    "UploadCtxProvider",
+    "DropArea",
+    "SourceList",
+    "UploadList",
+    "CameraSource",
+    "UrlSource",
+    "ExternalSource",
+    "defineLocale",
+    "loadFileUploaderFrom",
+    "UploaderPublicApi"
+  ]
+}
